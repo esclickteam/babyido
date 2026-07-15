@@ -130,10 +130,10 @@ function AppSidebar() {
 
   return (
     <Sidebar
-      side="left"
+      side="right"
       variant="sidebar"
       collapsible="icon"
-      className="[&_[data-sidebar=sidebar]]:bg-white [&_[data-sidebar=sidebar]]:border-r [&_[data-sidebar=sidebar]]:border-[var(--stroke)]"
+      className="[&_[data-sidebar=sidebar]]:border-l [&_[data-sidebar=sidebar]]:border-[var(--stroke)] [&_[data-sidebar=sidebar]]:bg-white"
     >
       <SidebarHeader className="border-b border-[var(--stroke)] p-5">
         <Link href="/dashboard" className="flex items-center gap-3">
@@ -203,9 +203,9 @@ export function AppShell({
   useBabies();
 
   return (
-    <SidebarProvider defaultOpen={true} className="!flex-row" style={{ direction: "ltr" }}>
+    <SidebarProvider defaultOpen={true}>
       <AppSidebar />
-      <SidebarInset dir="rtl" className="ido-sprout min-h-svh min-w-0 flex-1 overflow-x-hidden">
+      <SidebarInset className="ido-sprout min-h-svh min-w-0 flex-1 overflow-x-hidden">
         <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b border-[var(--stroke)] bg-white/90 px-4 backdrop-blur-md md:px-6">
           <SidebarTrigger className="rounded-xl md:hidden" />
           <Separator orientation="vertical" className="h-6 md:hidden" />
