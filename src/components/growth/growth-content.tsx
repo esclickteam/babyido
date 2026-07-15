@@ -189,8 +189,8 @@ export function GrowthContent() {
           {t("invalidMeasurementDates")}
         </div>
       )}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-5">
+        <div className="space-y-4 lg:col-span-2">
           <IdoPanel className="space-y-4 p-4 sm:p-5">
             <SectionTitle>{t("whoMeasuring")}</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
@@ -415,7 +415,7 @@ export function GrowthContent() {
           </IdoPanel>
         </div>
 
-        <IdoPanel className="p-4 sm:p-5">
+        <IdoPanel className="p-4 sm:p-5 lg:col-span-3">
           <Tabs value={activeMetric} onValueChange={(v) => setActiveMetric(v as GrowthMetric)}>
             <TabsList className="mx-auto mb-4 grid w-full max-w-md grid-cols-3 bg-white/70">
               <TabsTrigger value="weight">{t("weight")}</TabsTrigger>
