@@ -13,6 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import type { DotProps } from "recharts";
 import type { Gender } from "@/types";
 import { IdoButton } from "@/components/idoland/ido-button";
 import {
@@ -35,7 +36,8 @@ const CURVE_COLORS: Record<string, string> = {
   p3: "#3b82f6",
 };
 
-const CHART_PERCENTILES = [3, 15, 50, 85, 97];
+const CHART_PERCENTILES = [3, 15, 50, 85, 97] as const;
+const CURVE_KEYS = ["p97", "p85", "p50", "p15", "p3"] as const;
 
 interface GrowthChartProps {
   metric: GrowthMetric;
@@ -71,10 +73,30 @@ interface ChartBodyProps {
   gender: Gender;
   points: MeasurementPlotPoint[];
   expanded?: boolean;
-  showPointLabels?: boolean;
 }
 
-function ChartBody({ metric, gender, points, expanded, showPointLabels }: ChartBodyProps) {
+function MeasurementDot({
+  cx = 0,
+  cy = 0,
+  percentile,
+  offset = 0,
+  expanded,
+}: DotProps & { percentile: number; offset?: number; expanded?: boolean }) {
+  const r = expanded ? 7 : 5;
+  const labelY = cy - 26 - offset;
+
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={r} fill="#0f172a" stroke="#fff" strokeWidth={2} />
+      <rect x={cx - 40} y={labelY - 12} width={80} height={22} rx={6} fill="#2563eb" />
+      <text x={cx} y={labelY + 3} textAnchor="middle" fill="#fff" fontSize={10} fontWeight={700}>
+        אחוזון {percentile.toFixed(1)}
+      </text>
+    </g>
+  );
+}
+
+function ChartBody({ metric, gender, points, expanded }: ChartBodyProps) {
   const t = useTranslations("growth");
   const tc = useTranslations("common");
 
@@ -112,8 +134,10 @@ function ChartBody({ metric, gender, points, expanded, showPointLabels }: ChartB
 
   const chartHeight = expanded ? "min(40vh, 360px)" : "300px";
   const margin = expanded
-    ? { top: 20, right: 28, left: 4, bottom: 16 }
-    : { top: 16, right: 12, left: 4, bottom: 12 };
+    ? { top: 36, right: 36, left: 4, bottom: 16 }
+    : { top: 32, right: 28, left: 4, bottom: 12 };
+
+  const curveEnd = curves[curves.length - 1];
 
   return (
     <div className="space-y-3">
@@ -209,24 +233,40 @@ function ChartBody({ metric, gender, points, expanded, showPointLabels }: ChartB
                 key={point.id}
                 x={point.month}
                 y={point.value}
-                r={expanded ? 7 : 5}
-                fill="#0f172a"
-                stroke="#fff"
-                strokeWidth={2}
+                r={0}
+                fill="transparent"
+                stroke="none"
                 ifOverflow="visible"
-                label={
-                  showPointLabels && point.percentile != null
-                    ? {
-                        value: `אחוזון ${point.percentile.toFixed(1)}`,
-                        position: index % 2 === 0 ? "top" : "right",
-                        fill: "#1d4ed8",
-                        fontSize: expanded ? 12 : 10,
-                        fontWeight: 700,
-                      }
-                    : undefined
-                }
+                shape={(props) => (
+                  <MeasurementDot
+                    {...props}
+                    percentile={point.percentile!}
+                    offset={(index % 3) * 14}
+                    expanded={expanded}
+                  />
+                )}
               />
             ))}
+            {curveEnd &&
+              CURVE_KEYS.map((key, index) => (
+                <ReferenceDot
+                  key={`curve-label-${key}`}
+                  x={24}
+                  y={curveEnd[key]}
+                  r={0}
+                  fill="transparent"
+                  stroke="none"
+                  ifOverflow="visible"
+                  label={{
+                    value: String(CHART_PERCENTILES[index]),
+                    position: "right",
+                    fill: CURVE_COLORS[key],
+                    fontSize: expanded ? 12 : 11,
+                    fontWeight: 600,
+                    dx: 6,
+                  }}
+                />
+              ))}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -278,13 +318,7 @@ export function GrowthChart({ metric, gender, points }: GrowthChartProps) {
               {metricLabel}
             </DialogTitle>
           </DialogHeader>
-          <ChartBody
-            metric={metric}
-            gender={gender}
-            points={points}
-            expanded
-            showPointLabels={points.length <= 4}
-          />
+          <ChartBody metric={metric} gender={gender} points={points} expanded />
           <p className="text-center text-xs text-muted-foreground">{t("whoStandardNote")}</p>
         </DialogContent>
       </Dialog>
