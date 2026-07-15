@@ -14,6 +14,7 @@ import { getExactAge } from "@/utils/age";
 import { setSelectedBabyCookie } from "@/lib/baby-selection.client";
 import type { Locale } from "@/types";
 import { LinkButton } from "@/components/shared/link-button";
+import { BrandLogo } from "@/components/shared/brand-logo";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -125,7 +126,6 @@ function ThemeToggle() {
 function AppSidebar() {
   const pathname = usePathname();
   const t = useTranslations("nav");
-  const tc = useTranslations("common");
   const ta = useTranslations("auth");
 
   return (
@@ -136,14 +136,8 @@ function AppSidebar() {
       className="[&_[data-sidebar=sidebar]]:border-l [&_[data-sidebar=sidebar]]:border-[var(--stroke)] [&_[data-sidebar=sidebar]]:bg-white"
     >
       <SidebarHeader className="border-b border-[var(--stroke)] p-5">
-        <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="ido-brand-mark shrink-0" />
-          <div className="group-data-[collapsible=icon]:hidden">
-            <p className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--grass-deep)]">
-              {tc("appName")}
-            </p>
-            <p className="text-xs text-muted-foreground">{tc("tagline")}</p>
-          </div>
+        <Link href="/dashboard" className="flex items-center justify-center">
+          <BrandLogo size="sm" className="group-data-[collapsible=icon]:h-8" />
         </Link>
       </SidebarHeader>
 
@@ -206,10 +200,18 @@ export function AppShell({
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <SidebarInset className="ido-sprout min-h-svh min-w-0 flex-1 overflow-x-hidden">
-        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b border-[var(--stroke)] bg-white/90 px-4 backdrop-blur-md md:px-6">
-          <SidebarTrigger className="rounded-xl md:hidden" />
-          <Separator orientation="vertical" className="h-6 md:hidden" />
-          <BabySwitcher />
+        <header className="relative sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b border-[var(--stroke)] bg-white/90 px-4 backdrop-blur-md md:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <SidebarTrigger className="rounded-xl md:hidden" />
+            <Separator orientation="vertical" className="h-6 md:hidden" />
+            <BabySwitcher />
+          </div>
+          <Link
+            href="/dashboard"
+            className="absolute left-1/2 hidden -translate-x-1/2 sm:block"
+          >
+            <BrandLogo size="xs" />
+          </Link>
           <div className="ms-auto flex items-center gap-2">
             <QuickAddSheet />
             <ThemeToggle />

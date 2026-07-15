@@ -2,7 +2,9 @@ import { ArrowLeft } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { IdoButton } from "@/components/idoland/ido-button";
 import { SkyDecor } from "@/components/idoland/sky-decor";
+import { BrandLogo } from "@/components/shared/brand-logo";
 import { LegalDisclaimer } from "@/components/shared/legal-disclaimer";
+import { Link } from "@/i18n/navigation";
 
 export default async function LandingPage({
   params,
@@ -12,7 +14,6 @@ export default async function LandingPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("landing");
-  const tc = await getTranslations("common");
 
   const features = [
     { emoji: "📏", title: t("featureGrowth"), desc: t("featureGrowthDesc") },
@@ -25,17 +26,11 @@ export default async function LandingPage({
     <div className="ido-sprout relative min-h-screen">
       <SkyDecor />
 
-      <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <div className="flex items-center gap-3">
-          <div className="ido-brand-mark" aria-hidden />
-          <div>
-            <p className="font-[family-name:var(--font-display)] text-sm font-semibold tracking-widest text-[var(--grass-deep)]">
-              {t("brandMark")}
-            </p>
-            <p className="font-[family-name:var(--font-display)] text-lg font-bold">{tc("appName")}</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-end px-6 py-5">
+        <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+          <BrandLogo size="md" priority />
+        </Link>
+        <div className="relative z-10 flex flex-wrap items-center gap-2">
           <IdoButton href="/login" variant="ghost" className="!px-5 !py-2.5 text-sm">
             {t("signIn")}
           </IdoButton>
