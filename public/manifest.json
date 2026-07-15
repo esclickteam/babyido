@@ -2,7 +2,7 @@
   "name": "BabyIdo",
   "short_name": "BabyIdo",
   "description": "הכל שהתינוק שלכם צריך, במקום אחד.",
-  "start_url": "/he/dashboard",
+  "start_url": "/he",
   "display": "standalone",
   "background_color": "#fff6d6",
   "theme_color": "#1f6b42",

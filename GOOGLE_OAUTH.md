@@ -1,11 +1,11 @@
-# התחברות עם Google — BabyDo
+# התחברות עם Google — BabyIdo
 
 ## שלב 1: Google Cloud Console
 
 1. פתחו [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials)
 2. **Create Credentials** → **OAuth client ID**
 3. סוג: **Web application**
-4. שם: `BabyDo Local` (או כל שם)
+4. שם: `BabyIdo` (או כל שם)
 
 ## שלב 2: Redirect URIs
 
@@ -13,24 +13,29 @@
 
 ```
 http://localhost:3000/api/auth/callback/google
+https://babyido.com/api/auth/callback/google
+https://www.babyido.com/api/auth/callback/google
 ```
 
-בפרודקשן הוסיפו גם:
+## שלב 3: משתני סביבה
 
-```
-https://YOUR-DOMAIN.com/api/auth/callback/google
-```
-
-## שלב 3: .env.local
-
-העתיקו את Client ID ו-Client Secret ל:
+**מקומי** (`.env.local`):
 
 ```env
 AUTH_GOOGLE_ID=xxxxx.apps.googleusercontent.com
 AUTH_GOOGLE_SECRET=GOCSPX-xxxxx
+AUTH_URL=http://localhost:3000
 ```
 
-## שלב 4: הפעלה מחדש
+**פרודקשן** (Vercel → Settings → Environment Variables):
+
+```env
+AUTH_GOOGLE_ID=xxxxx.apps.googleusercontent.com
+AUTH_GOOGLE_SECRET=GOCSPX-xxxxx
+AUTH_URL=https://babyido.com
+```
+
+## שלב 4: הפעלה
 
 ```bash
 npm run dev
