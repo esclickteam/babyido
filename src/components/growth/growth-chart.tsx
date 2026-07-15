@@ -82,9 +82,13 @@ export function GrowthChart({ metric, gender, points }: GrowthChartProps) {
     if (!values.length) return [0, 10] as [number, number];
     const min = Math.min(...values);
     const max = Math.max(...values);
-    const pad = (max - min) * 0.08 || 1;
-    return [Math.max(0, min - pad), max + pad] as [number, number];
+    const pad = (max - min) * 0.06 || 1;
+    const lo = Math.max(0, Math.floor((min - pad) * 10) / 10);
+    const hi = Math.ceil((max + pad) * 10) / 10;
+    return [lo, hi] as [number, number];
   }, [curves, scatterData]);
+
+  const yTicks = useMemo(() => buildYTicks(yDomain[0], yDomain[1], metric), [yDomain, metric]);
 
   const metricLabel =
     metric === "weight" ? t("weightCurve") : metric === "height" ? t("heightCurve") : t("headCurve");
@@ -114,8 +118,11 @@ export function GrowthChart({ metric, gender, points }: GrowthChartProps) {
             />
             <YAxis
               domain={yDomain}
+              ticks={yTicks}
+              tickFormatter={(v) => formatYTick(Number(v), metric)}
+              allowDecimals={false}
               tick={{ fontSize: 11 }}
-              width={42}
+              width={44}
               label={{
                 value: `${metric === "weight" ? t("weight") : metric === "height" ? t("height") : t("head")} (${unit})`,
                 angle: -90,
@@ -134,6 +141,9 @@ export function GrowthChart({ metric, gender, points }: GrowthChartProps) {
               data={scatterData}
               dataKey="value"
               fill="#0f172a"
+              xAxisId={0}
+              yAxisId={0}
+              line={false}
               shape={(props: { cx?: number; cy?: number; payload?: MeasurementPlotPoint }) => {
                 const { cx = 0, cy = 0, payload } = props;
                 if (payload?.percentile == null) return <g />;
@@ -168,3 +178,27 @@ export function GrowthChart({ metric, gender, points }: GrowthChartProps) {
 }
 
 const CHART_PERCENTILES = [3, 15, 50, 85, 97];
+
+function formatYTick(value: number, metric: GrowthMetric): string {
+  if (metric === "weight") return value.toFixed(1);
+  return String(Math.round(value));
+}
+
+function buildYTicks(min: number, max: number, metric: GrowthMetric): number[] {
+  if (metric === "weight") {
+    const lo = Math.max(0, Math.floor(min));
+    const hi = Math.ceil(max);
+    const step = hi - lo <= 12 ? 2 : 4;
+    const start = Math.floor(lo / step) * step;
+    const ticks: number[] = [];
+    for (let v = start; v <= hi + step * 0.01; v += step) ticks.push(v);
+    return ticks.length ? ticks : [lo, hi];
+  }
+
+  const lo = Math.max(0, Math.floor(min / 5) * 5);
+  const hi = Math.ceil(max / 5) * 5;
+  const step = hi - lo <= 40 ? 5 : 10;
+  const ticks: number[] = [];
+  for (let v = lo; v <= hi; v += step) ticks.push(v);
+  return ticks.length ? ticks : [lo, hi];
+}

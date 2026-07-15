@@ -4,6 +4,7 @@ import monthWfa from "@flame-cai/anthro/data/month_wfa.json";
 import monthHcfa from "@/data/month-hcfa.json";
 import { anthro } from "@/lib/anthro";
 import { parseBirthDate } from "@/utils/age";
+import { toDateOnlyString } from "@/utils/date";
 import type { Gender } from "@/types";
 
 const DAYS_PER_MONTH = 30.4375;
@@ -39,9 +40,29 @@ function toSexKey(gender: Gender): SexKey {
   return gender === "female" ? "F" : "M";
 }
 
-export function getAgeInMonths(birthDate: string, measurementDate: string): number {
-  const days = anthro.ageDays(birthDate, measurementDate);
-  if (days == null || days < 0) return 0;
+/** Normalize any date value to yyyy-MM-dd for WHO age lookup. */
+export function normalizeGrowthDate(date: string): string {
+  return toDateOnlyString(parseBirthDate(date.split("T")[0]));
+}
+
+export function isMeasurementAfterBirth(birthDate: string, measurementDate: string): boolean {
+  const birth = parseBirthDate(normalizeGrowthDate(birthDate));
+  const measured = parseBirthDate(normalizeGrowthDate(measurementDate));
+  return measured.getTime() > birth.getTime();
+}
+
+export function getAgeInDays(birthDate: string, measurementDate: string): number | null {
+  if (!isMeasurementAfterBirth(birthDate, measurementDate)) return null;
+  const days = anthro.ageDays(
+    normalizeGrowthDate(birthDate),
+    normalizeGrowthDate(measurementDate)
+  );
+  return days == null || days < 0 ? null : days;
+}
+
+export function getAgeInMonths(birthDate: string, measurementDate: string): number | null {
+  const days = getAgeInDays(birthDate, measurementDate);
+  if (days == null) return null;
   return days / DAYS_PER_MONTH;
 }
 
@@ -112,27 +133,35 @@ export function computePercentile(
   measurementDate: string,
   value: number
 ): number | null {
-  const sex = toSexKey(gender);
   const ageMonths = getAgeInMonths(birthDate, measurementDate);
+  if (ageMonths == null) return null;
+
+  const sex = toSexKey(gender);
+  const dob = normalizeGrowthDate(birthDate);
+  const measured = normalizeGrowthDate(measurementDate);
 
   if (metric === "head") {
     const lms = getMetricLms(metric, sex, ageMonths);
     if (!lms) return null;
     const z = lmsZ(value, lms.L, lms.M, lms.S);
-    return z == null ? null : zToPercentile(z);
+    return z == null ? null : clampPercentile(zToPercentile(z));
   }
 
   const input = {
     mode: "day" as const,
     sex,
-    dob: birthDate,
-    measured: measurementDate,
+    dob,
+    measured,
     ...(metric === "weight" ? { weight_kg: value } : { height_cm: value, measure: "L" as const }),
   };
 
   const result = anthro.compute(input);
   const z = metric === "weight" ? result.z_wfa : result.z_lhfa;
-  return z == null ? null : zToPercentile(z);
+  return z == null ? null : clampPercentile(zToPercentile(z));
+}
+
+function clampPercentile(p: number): number {
+  return Math.min(99.9, Math.max(0.1, p));
 }
 
 export interface PercentileCurvePoint {

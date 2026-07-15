@@ -29,6 +29,7 @@ import {
   formatShortDate,
   getAgeInMonths,
   getMetricValue,
+  isMeasurementAfterBirth,
   type GrowthMetric,
   type MeasurementPlotPoint,
 } from "@/utils/growth-percentile";
@@ -95,8 +96,11 @@ export function GrowthContent() {
 
     return measurements
       .map((m) => {
+        if (!isMeasurementAfterBirth(baby.birthDate, m.date)) return null;
+
         const value = getMetricValue(activeMetric, m.weight, m.height, m.headCircumference);
-        if (value == null) return null;
+        const month = getAgeInMonths(baby.birthDate, m.date);
+        if (value == null || month == null) return null;
 
         const percentile = computePercentile(
           activeMetric,
@@ -108,7 +112,7 @@ export function GrowthContent() {
 
         return {
           id: m._id,
-          month: getAgeInMonths(baby.birthDate, m.date),
+          month,
           value,
           percentile,
           dateLabel: formatShortDate(m.date, locale),
@@ -117,6 +121,14 @@ export function GrowthContent() {
       .filter((p): p is MeasurementPlotPoint => p != null)
       .slice(0, MAX_MEASUREMENTS);
   }, [activeMetric, baby, locale, measurements]);
+
+  const hasInvalidMeasurements = useMemo(
+    () =>
+      baby
+        ? (measurements?.some((m) => !isMeasurementAfterBirth(baby.birthDate, m.date)) ?? false)
+        : false,
+    [baby, measurements]
+  );
 
   if (!baby) return <NoBabyPrompt />;
 
@@ -148,6 +160,10 @@ export function GrowthContent() {
       toast.error(t("atLeastOne"));
       return;
     }
+    if (!isMeasurementAfterBirth(baby.birthDate, date)) {
+      toast.error(t("measurementBeforeBirth"));
+      return;
+    }
 
     try {
       await createMeasurement.mutateAsync({
@@ -168,6 +184,11 @@ export function GrowthContent() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
+      {hasInvalidMeasurements && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {t("invalidMeasurementDates")}
+        </div>
+      )}
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-4">
           <IdoPanel className="space-y-4 p-4 sm:p-5">
@@ -309,23 +330,35 @@ export function GrowthContent() {
             ) : (
               <ul className="space-y-2">
                 {measurements.slice(0, MAX_MEASUREMENTS).map((m) => {
-                  const weightP = m.weight
-                    ? computePercentile("weight", baby.gender, baby.birthDate, m.date, m.weight / 1000)
-                    : null;
-                  const heightP = m.height
-                    ? computePercentile("height", baby.gender, baby.birthDate, m.date, m.height)
-                    : null;
-                  const headP = m.headCircumference
-                    ? computePercentile("head", baby.gender, baby.birthDate, m.date, m.headCircumference)
-                    : null;
+                  const validDate = isMeasurementAfterBirth(baby.birthDate, m.date);
+                  const weightP =
+                    validDate && m.weight
+                      ? computePercentile("weight", baby.gender, baby.birthDate, m.date, m.weight / 1000)
+                      : null;
+                  const heightP =
+                    validDate && m.height
+                      ? computePercentile("height", baby.gender, baby.birthDate, m.date, m.height)
+                      : null;
+                  const headP =
+                    validDate && m.headCircumference
+                      ? computePercentile("head", baby.gender, baby.birthDate, m.date, m.headCircumference)
+                      : null;
 
                   return (
                     <li
                       key={m._id}
-                      className="rounded-xl border border-[var(--stroke)] bg-white/80 px-3 py-3"
+                      className={cn(
+                        "rounded-xl border bg-white/80 px-3 py-3",
+                        validDate ? "border-[var(--stroke)]" : "border-amber-300"
+                      )}
                     >
                       <div className="mb-2 flex items-start justify-between gap-2">
-                        <p className="text-sm font-semibold">{formatDate(m.date, locale)}</p>
+                        <div>
+                          <p className="text-sm font-semibold">{formatDate(m.date, locale)}</p>
+                          {!validDate && (
+                            <p className="text-[11px] text-amber-700">{t("measurementBeforeBirth")}</p>
+                          )}
+                        </div>
                         <div className="flex gap-1">
                           <button
                             type="button"
