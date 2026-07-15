@@ -17,10 +17,10 @@ const symbolSizes = {
 };
 
 const wordmarkSizes = {
-  sidebar: "text-xl",
-  dashboard: "text-2xl md:text-3xl",
-  header: "text-3xl sm:text-4xl md:text-5xl lg:text-6xl",
-  hero: "text-5xl sm:text-6xl md:text-7xl",
+  sidebar: "h-8",
+  dashboard: "h-10 md:h-12",
+  header: "h-12 sm:h-14 md:h-16 lg:h-[4.5rem]",
+  hero: "h-16 sm:h-20 md:h-24",
 };
 
 export function BrandSymbol({ size = "header", className, priority }: BrandAssetProps) {
@@ -41,21 +41,20 @@ export function BrandSymbol({ size = "header", className, priority }: BrandAsset
   );
 }
 
-export function BrandWordmark({ size = "header", className }: BrandAssetProps) {
+export function BrandWordmark({ size = "header", className, priority }: BrandAssetProps) {
   return (
-    <span
-      aria-label="BabyIdo"
+    <Image
+      src="/babyido-wordmark.png"
+      alt="BabyIdo"
+      width={1024}
+      height={428}
+      priority={priority}
       className={cn(
-        "font-[family-name:var(--font-display)] font-bold leading-none tracking-tight",
+        "w-auto object-contain drop-shadow-[0_6px_20px_rgba(47,143,91,0.15)]",
         wordmarkSizes[size],
         className
       )}
-    >
-      <span className="text-[var(--grass-deep)]">Baby</span>
-      <span className="text-[#f4a082]">I</span>
-      <span className="text-[#f4a082]">d</span>
-      <span className="text-[#6ecfc0]">o</span>
-    </span>
+    />
   );
 }
 
@@ -74,7 +73,7 @@ export function BrandHeader({ size = "header", className, priority }: BrandHeade
   return (
     <div className={cn("flex items-center justify-center gap-3 sm:gap-4 md:gap-5", className)}>
       <BrandSymbol size={size} priority={priority} />
-      <BrandWordmark size={size} />
+      <BrandWordmark size={size} priority={priority} />
     </div>
   );
 }

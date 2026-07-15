@@ -173,7 +173,9 @@
     "remainingAfter": "נותרו {amount} מ\"ל",
     "viewFull": "מעקב מלא",
     "mealLogs": "יומן ארוחות",
-    "noMealsToday": "עדיין לא נרשמו ארוחות היום"
+    "noMealsToday": "עדיין לא נרשמו ארוחות היום",
+    "periodSummary": "סיכום האכלה",
+    "periodTotal": "סה\"כ בתקופה"
   },
   "growth": {
     "latest": "מדידה אחרונה",

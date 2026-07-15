@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { FEEDING_TYPES, type FeedingType } from "@/constants/feeding";
+import { FeedingPeriodSummaryPanel } from "@/components/feeding/feeding-period-summary";
 import {
   useCreateFeedingEntry,
   useDeleteFeedingEntry,
@@ -138,6 +139,10 @@ export function FeedingContent() {
             remainingLabel={tfc("remainingToday")}
           />
         ) : null}
+      </IdoPanel>
+
+      <IdoPanel className="p-5 sm:p-6">
+        <FeedingPeriodSummaryPanel babyId={baby._id} anchorDate={selectedDate} />
       </IdoPanel>
 
       <IdoPanel className="space-y-5 p-5 sm:p-6">

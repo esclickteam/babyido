@@ -170,6 +170,69 @@ export function combineLocalDateTime(dateStr: string, timeStr: string): Date {
   return new Date(y, m - 1, d, parsed.hours, parsed.minutes, 0);
 }
 
+export type FeedingPeriod = "day" | "week" | "month";
+
+function parseDateOnly(dateStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/** yyyy-MM-dd keys for each day in a feeding summary period */
+export function getFeedingPeriodDays(period: FeedingPeriod, anchorDateStr: string): string[] {
+  const anchor = parseDateOnly(anchorDateStr);
+
+  if (period === "day") {
+    return [anchorDateStr.split("T")[0]];
+  }
+
+  if (period === "week") {
+    return Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(anchor);
+      day.setDate(anchor.getDate() - (6 - i));
+      return toDateOnlyString(day);
+    });
+  }
+
+  const year = anchor.getFullYear();
+  const month = anchor.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  return Array.from({ length: daysInMonth }, (_, i) =>
+    toDateOnlyString(new Date(year, month, i + 1))
+  );
+}
+
+export function getFeedingPeriodRange(period: FeedingPeriod, anchorDateStr: string) {
+  const days = getFeedingPeriodDays(period, anchorDateStr);
+  const { start } = getFeedingDayRange(days[0]);
+  const { end } = getFeedingDayRange(days[days.length - 1]);
+  return { days, start, end };
+}
+
+/** Wall-clock UTC date key for a stored feeding entry */
+export function feedingEntryDateKey(time: Date | string): string {
+  const d = typeof time === "string" ? new Date(time) : time;
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function formatFeedingPeriodLabel(
+  period: FeedingPeriod,
+  anchorDateStr: string,
+  locale: Locale = "he"
+): string {
+  const days = getFeedingPeriodDays(period, anchorDateStr);
+  if (period === "day") {
+    return isoToDisplay(days[0]);
+  }
+  if (period === "week") {
+    return `${isoToDisplay(days[0])} – ${isoToDisplay(days[days.length - 1])}`;
+  }
+  const anchor = parseDateOnly(anchorDateStr);
+  return format(anchor, "MMMM yyyy", { locale: getDateLocale(locale) });
+}
+
 export function formatRelative(date: Date | string, locale: Locale) {
   const d = toLocalDate(date);
   return formatDistanceToNow(d, { addSuffix: true, locale: getDateLocale(locale) });

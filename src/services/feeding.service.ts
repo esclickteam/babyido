@@ -1,4 +1,5 @@
 import type { FeedingEntry } from "@/types";
+import type { FeedingPeriod } from "@/utils/date";
 
 export interface FeedingSummary {
   todayTotal: number;
@@ -8,6 +9,32 @@ export interface FeedingSummary {
   lastWeightGrams: number;
   mealsPerDay: number;
   entries: FeedingEntry[];
+}
+
+export interface FeedingPeriodDay {
+  date: string;
+  total: number;
+}
+
+export interface FeedingPeriodSummary {
+  period: FeedingPeriod;
+  anchorDate: string;
+  periodLabel: string;
+  days: FeedingPeriodDay[];
+  grandTotal: number;
+  dailyAverage: number;
+  dayCount: number;
+}
+
+export async function fetchFeedingPeriodSummary(
+  babyId: string,
+  period: FeedingPeriod,
+  date: string
+): Promise<FeedingPeriodSummary> {
+  const params = new URLSearchParams({ babyId, period, date });
+  const res = await fetch(`/api/feeding/period-summary?${params}`);
+  if (!res.ok) throw new Error("Failed to fetch feeding period summary");
+  return res.json();
 }
 
 export async function fetchFeedingSummary(
