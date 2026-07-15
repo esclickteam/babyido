@@ -38,7 +38,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 const QuickAddSheet = dynamic(
@@ -201,30 +200,41 @@ export function AppShell({
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <SidebarInset className="ido-sprout min-h-svh min-w-0 flex-1 overflow-x-hidden">
-        <header className="relative sticky top-0 z-10 grid h-20 shrink-0 grid-cols-3 items-center gap-3 border-b border-[var(--stroke)] bg-white/90 px-4 backdrop-blur-md md:h-24 md:px-6">
-          <Link href="/dashboard" className="flex justify-start">
-            <BrandSymbol size="dashboard" />
+        <header className="relative sticky top-0 z-10 h-16 shrink-0 border-b border-[var(--stroke)] bg-white/90 backdrop-blur-md md:h-24">
+          <Link
+            href="/dashboard"
+            className="absolute top-1/2 left-3 z-20 -translate-y-1/2 sm:left-4 md:left-6"
+          >
+            <BrandSymbol size="dashboard" className="h-11 w-11 sm:h-14 sm:w-14" />
           </Link>
-          <Link href="/dashboard" className="hidden justify-center sm:flex">
+
+          <Link
+            href="/dashboard"
+            className="absolute top-1/2 left-1/2 z-10 hidden -translate-x-1/2 -translate-y-1/2 sm:flex"
+          >
             <BrandWordmark size="dashboard" />
           </Link>
-          <div className="flex items-center justify-end gap-2">
-            <SidebarTrigger className="rounded-xl md:hidden" />
-            <Separator orientation="vertical" className="h-6 md:hidden" />
-            <BabySwitcher />
+
+          <div className="absolute top-1/2 right-3 z-20 flex -translate-y-1/2 items-center gap-1 sm:gap-2 md:right-6">
+            <SidebarTrigger className="size-11 shrink-0 rounded-xl border border-[var(--stroke)] bg-white shadow-sm md:hidden" />
+            <div className="hidden md:block">
+              <BabySwitcher />
+            </div>
             <QuickAddSheet />
-            <ThemeToggle />
+            <div className="hidden sm:contents">
+              <ThemeToggle />
+            </div>
             {user.image ? (
               <Image
                 src={user.image}
                 alt=""
                 width={32}
                 height={32}
-                className="rounded-full"
-                sizes="32px"
+                className="size-8 shrink-0 rounded-full sm:size-9"
+                sizes="36px"
               />
             ) : (
-              <div className="flex size-8 items-center justify-center rounded-full bg-muted text-sm font-medium">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium sm:size-9">
                 {user.name?.[0] ?? "?"}
               </div>
             )}

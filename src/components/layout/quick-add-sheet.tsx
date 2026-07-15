@@ -15,10 +15,10 @@ export function QuickAddSheet() {
   return (
     <Sheet>
       <SheetTrigger
-        className={cn(buttonVariants({ size: "sm" }), "rounded-xl")}
+        className={cn(buttonVariants({ size: "sm" }), "rounded-xl px-2.5 sm:px-3")}
       >
         <Plus className="size-4" />
-        {t("quickAdd")}
+        <span className="hidden sm:inline">{t("quickAdd")}</span>
       </SheetTrigger>
       <SheetContent side="bottom" className="rounded-t-3xl">
         <SheetHeader>
