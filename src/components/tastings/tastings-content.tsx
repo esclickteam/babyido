@@ -396,7 +396,7 @@ function TastingFormFields({
         <HebrewDateInput
           value={tastedDate}
           onChange={setTastedDate}
-          className={cn(inputClass, "max-w-[160px]")}
+          className={inputClass}
         />
       </div>
       <div className="space-y-2">

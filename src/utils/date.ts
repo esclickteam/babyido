@@ -14,8 +14,8 @@ export {
 
 const locales = { he, en: enUS };
 
-/** Hebrew display pattern: 18.03.26 */
-export const HE_DATE_PATTERN = "d.MM.yy";
+/** Hebrew display pattern: 18/03/2026 */
+export const HE_DATE_PATTERN = "d/MM/yyyy";
 
 export function getDateLocale(locale: Locale) {
   return locales[locale];
@@ -25,19 +25,18 @@ function toLocalDate(date: Date | string): Date {
   return typeof date === "string" ? parseBirthDate(date) : date;
 }
 
-/** yyyy-MM-dd → 18.03.26 */
+/** yyyy-MM-dd → 18/03/2026 */
 export function isoToDisplay(iso: string): string {
   if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return "";
   const [y, m, d] = iso.split("T")[0].split("-").map(Number);
-  const yy = String(y % 100).padStart(2, "0");
   const mm = String(m).padStart(2, "0");
-  return `${d}.${mm}.${yy}`;
+  return `${d}/${mm}/${y}`;
 }
 
-/** 18.03.26 / 18.3.2026 → yyyy-MM-dd */
+/** 18/03/2026 → yyyy-MM-dd */
 export function displayToIso(display: string): string | null {
-  const cleaned = display.trim().replace(/[/\-]/g, ".");
-  const match = cleaned.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})$/);
+  const cleaned = display.trim().replace(/[.\-]/g, "/");
+  const match = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
   if (!match) return null;
 
   const day = Number(match[1]);
@@ -72,7 +71,7 @@ export function formatShortDate(date: Date | string, locale: Locale = "he") {
   return formatDate(date, locale, HE_DATE_PATTERN);
 }
 
-/** 18.03.26 · 14:30 */
+/** 18/03/2026 · 14:30 */
 export function formatDateTime(date: Date | string, locale: Locale = "he") {
   const d = toLocalDate(date);
   const datePart = format(d, HE_DATE_PATTERN, { locale: getDateLocale(locale) });

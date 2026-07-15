@@ -124,7 +124,7 @@ export function FeedingContent() {
           <HebrewDateInput
             value={selectedDate}
             onChange={setSelectedDate}
-            className={cn(inputClass, "max-w-[160px]")}
+            className={inputClass}
           />
         </div>
 
@@ -227,7 +227,7 @@ export function FeedingContent() {
               <HebrewDateInput
                 value={selectedDate}
                 onChange={setSelectedDate}
-                className={cn(inputClass, "max-w-[160px]")}
+                className={inputClass}
               />
             </div>
             <div className="space-y-2">

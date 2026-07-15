@@ -165,7 +165,7 @@ export function GrowthContent() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Field label={tc("date")} className="max-w-[160px]">
+            <Field label={tc("date")}>
               <HebrewDateInput value={date} onChange={setDate} className={inputClass} />
             </Field>
 
