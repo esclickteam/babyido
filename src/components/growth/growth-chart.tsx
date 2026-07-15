@@ -110,9 +110,9 @@ function ChartBody({ metric, gender, points, expanded, showPointLabels }: ChartB
   const metricLabel =
     metric === "weight" ? t("weightCurve") : metric === "height" ? t("heightCurve") : t("headCurve");
 
-  const chartHeight = expanded ? "min(72vh, 640px)" : "320px";
+  const chartHeight = expanded ? "min(40vh, 360px)" : "300px";
   const margin = expanded
-    ? { top: 28, right: 24, left: 8, bottom: 20 }
+    ? { top: 20, right: 28, left: 4, bottom: 16 }
     : { top: 16, right: 12, left: 4, bottom: 12 };
 
   return (
@@ -270,7 +270,7 @@ export function GrowthChart({ metric, gender, points }: GrowthChartProps) {
 
       <Dialog open={expanded} onOpenChange={setExpanded}>
         <DialogContent
-          className="flex max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-5xl flex-col gap-4 overflow-y-auto p-4 sm:p-6"
+          className="flex w-[min(96vw,1280px)] !max-w-[min(96vw,1280px)] flex-col gap-3 overflow-hidden p-4 sm:!max-w-[min(96vw,1280px)] sm:p-5"
           showCloseButton
         >
           <DialogHeader>
