@@ -1,5 +1,5 @@
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import { BabyForm } from "@/components/baby/baby-form";
+import { setRequestLocale } from "next-intl/server";
+import { BabyProfileContent } from "@/components/baby/baby-profile-content";
 import { PageContainer } from "@/components/shared/page-container";
 
 export default async function BabyProfilePage({
@@ -9,11 +9,10 @@ export default async function BabyProfilePage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("baby");
 
   return (
-    <PageContainer title={t("profile")} description={t("addChild")}>
-      <BabyForm />
+    <PageContainer>
+      <BabyProfileContent />
     </PageContainer>
   );
 }

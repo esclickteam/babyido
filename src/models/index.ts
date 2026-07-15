@@ -4,3 +4,4 @@ export { GrowthMeasurement } from "./GrowthMeasurement";
 export { FeedingEntry } from "./FeedingEntry";
 export { SleepEntry } from "./SleepEntry";
 export { Milestone } from "./Milestone";
+export { TastingEntry } from "./TastingEntry";

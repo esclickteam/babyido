@@ -1,7 +1,7 @@
 import { endOfDay, startOfDay } from "date-fns";
 import { connectDB } from "@/lib/db/mongodb";
 import { calculateDailyFormulaAmount } from "@/utils/age";
-import { Baby, FeedingEntry, GrowthMeasurement, Milestone, SleepEntry } from "@/models";
+import { Baby, FeedingEntry, GrowthMeasurement, Milestone, SleepEntry, TastingEntry } from "@/models";
 import type { DashboardStats } from "@/types";
 
 export async function getDashboardStats(
@@ -17,7 +17,7 @@ export async function getDashboardStats(
   const dayStart = startOfDay(now);
   const dayEnd = endOfDay(now);
 
-  const [lastGrowth, todayFeedings, todaySleep, lastMilestone] = await Promise.all([
+  const [lastGrowth, todayFeedings, todaySleep, lastMilestone, lastTasting] = await Promise.all([
     GrowthMeasurement.findOne({ babyId })
       .sort({ date: -1 })
       .select("weight height headCircumference")
@@ -35,6 +35,10 @@ export async function getDashboardStats(
       .select("startTime endTime")
       .lean(),
     Milestone.findOne({ babyId }).sort({ date: -1 }).select("type date notes createdAt").lean(),
+    TastingEntry.findOne({ babyId })
+      .sort({ tastedDate: -1 })
+      .select("foodName category tastedDate reactions isAllergen notes isCustom foodId createdAt")
+      .lean(),
   ]);
 
   const todayFeedingAmount = todayFeedings.reduce((sum, f) => sum + (f.amount ?? 0), 0);
@@ -65,6 +69,23 @@ export async function getDashboardStats(
           date: new Date(lastMilestone.date).toISOString(),
           notes: lastMilestone.notes,
           createdAt: new Date(lastMilestone.createdAt).toISOString(),
+        }
+      : undefined,
+    lastTasting: lastTasting
+      ? {
+          _id: String(lastTasting._id),
+          babyId,
+          foodName: lastTasting.foodName,
+          category: lastTasting.category,
+          tastedDate: lastTasting.tastedDate
+            ? new Date(lastTasting.tastedDate).toISOString()
+            : undefined,
+          reactions: lastTasting.reactions ?? [],
+          isAllergen: lastTasting.isAllergen,
+          notes: lastTasting.notes,
+          isCustom: lastTasting.isCustom,
+          foodId: lastTasting.foodId,
+          createdAt: new Date(lastTasting.createdAt).toISOString(),
         }
       : undefined,
     nextVaccination: undefined,

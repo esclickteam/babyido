@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const babySchema = z.object({
   name: z.string().min(1).max(100),
-  photoUrl: z.string().optional(),
+  photoUrl: z.string().max(600_000).optional(),
   birthDate: z.string().min(1),
   birthTime: z.string().optional(),
   gender: z.enum(["male", "female", "other"]),

@@ -35,6 +35,7 @@ export function useCreateBaby() {
     mutationFn: createBaby,
     onSuccess: (baby) => {
       addBaby(baby);
+      useBabyStore.getState().selectBaby(baby._id);
       queryClient.invalidateQueries({ queryKey: ["babies"] });
     },
   });

@@ -1,0 +1,65 @@
+import { z } from "zod";
+import { FEEDING_TYPES } from "@/constants/feeding";
+
+export const feedingEntrySchema = z.object({
+  babyId: z.string().min(1),
+  type: z.enum(FEEDING_TYPES),
+  time: z.string().min(1),
+  amount: z.number().min(0).optional(),
+  formulaBrand: z.string().max(100).optional(),
+  notes: z.string().max(500).optional(),
+});
+
+export type FeedingEntryInput = z.infer<typeof feedingEntrySchema>;
+
+export const growthMeasurementSchema = z.object({
+  babyId: z.string().min(1),
+  date: z.string().min(1),
+  weight: z.number().min(0).optional(),
+  height: z.number().min(0).optional(),
+  headCircumference: z.number().min(0).optional(),
+  notes: z.string().max(500).optional(),
+});
+
+export type GrowthMeasurementInput = z.infer<typeof growthMeasurementSchema>;
+
+export const tastingEntrySchema = z.object({
+  babyId: z.string().min(1),
+  foodName: z.string().min(1).max(100),
+  category: z.enum([
+    "vegetables",
+    "fruits",
+    "grains",
+    "legumes",
+    "meats",
+    "fish",
+    "dairy",
+    "allergens",
+  ]),
+  tastedDate: z.string().min(1),
+  reactions: z
+    .array(
+      z.enum([
+        "liked",
+        "disliked",
+        "allergy",
+        "constipation",
+        "diarrhea",
+        "rash",
+        "vomiting",
+        "other",
+      ])
+    )
+    .default([]),
+  isAllergen: z.boolean().optional(),
+  recommendedAge: z.string().max(50).optional(),
+  notes: z.string().max(500).optional(),
+  isCustom: z.boolean().optional(),
+  foodId: z.string().optional(),
+});
+
+export type TastingEntryInput = z.infer<typeof tastingEntrySchema>;
+
+export const numberField = {
+  setValueAs: (value: string) => (value === "" ? undefined : Number(value)),
+};

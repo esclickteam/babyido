@@ -88,6 +88,8 @@ export interface TastingEntry {
   rating?: number;
   timesEaten?: number;
   notes?: string;
+  isCustom?: boolean;
+  foodId?: string;
   createdAt: string;
 }
 
