@@ -9,6 +9,7 @@ import { babySchema, numberField, type BabyFormValues } from "@/lib/validations/
 import { useCreateBaby, useUpdateBaby } from "@/hooks/use-babies";
 import { setSelectedBabyCookie } from "@/lib/baby-selection.client";
 import type { Baby } from "@/types";
+import { HebrewDateInput } from "@/components/shared/hebrew-date-input";
 import { IdoButton } from "@/components/idoland/ido-button";
 import { IdoPanel } from "@/components/idoland/ido-panel";
 import { BabyPhotoUpload } from "@/components/baby/baby-photo-upload";
@@ -136,7 +137,11 @@ export function BabyForm({ baby, onSuccess }: BabyFormProps) {
           <SectionTitle>{t("birthDetails")}</SectionTitle>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("birthDate")}>
-              <Input id="birthDate" type="date" className={inputClass} {...form.register("birthDate")} />
+              <HebrewDateInput
+                value={form.watch("birthDate") || ""}
+                onChange={(v) => form.setValue("birthDate", v, { shouldDirty: true })}
+                className={inputClass}
+              />
             </Field>
             <Field label={t("birthTime")}>
               <Input id="birthTime" type="time" className={inputClass} {...form.register("birthTime")} />

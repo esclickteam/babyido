@@ -1,6 +1,5 @@
 "use client";
 
-import { format } from "date-fns";
 import { Check, ChevronLeft, Plus, Sparkles, Trash2, UtensilsCrossed } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -10,9 +9,10 @@ import { FOOD_CATEGORIES, TASTING_REACTIONS, type FoodCategory, type TastingReac
 import { TASTING_ORDER } from "@/constants/tastings";
 import { useCreateTasting, useDeleteTasting, useTastings } from "@/hooks/use-tastings";
 import { useBabyStore } from "@/stores/baby-store";
-import { formatDate } from "@/utils/date";
+import { formatDate, getTodayLocal } from "@/utils/date";
 import { getBabyAgeInMonths } from "@/utils/age";
 import type { Locale } from "@/types";
+import { HebrewDateInput } from "@/components/shared/hebrew-date-input";
 import { IdoButton } from "@/components/idoland/ido-button";
 import { IdoPanel } from "@/components/idoland/ido-panel";
 import { LegalDisclaimer } from "@/components/shared/legal-disclaimer";
@@ -54,7 +54,7 @@ export function TastingsContent() {
   const [selectedFoodId, setSelectedFoodId] = useState<string | null>(null);
   const [customName, setCustomName] = useState("");
   const [customCategory, setCustomCategory] = useState<FoodCategory>("vegetables");
-  const [tastedDate, setTastedDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [tastedDate, setTastedDate] = useState(getTodayLocal());
   const [reactions, setReactions] = useState<TastingReaction[]>([]);
   const [notes, setNotes] = useState("");
 
@@ -96,7 +96,7 @@ export function TastingsContent() {
     setCustomName("");
     setReactions([]);
     setNotes("");
-    setTastedDate(format(new Date(), "yyyy-MM-dd"));
+    setTastedDate(getTodayLocal());
   }
 
   async function handleLogRecommended() {
@@ -393,11 +393,10 @@ function TastingFormFields({
     <>
       <div className="space-y-2">
         <Label>{tc("date")}</Label>
-        <Input
-          type="date"
+        <HebrewDateInput
           value={tastedDate}
-          onChange={(e) => setTastedDate(e.target.value)}
-          className={inputClass}
+          onChange={setTastedDate}
+          className={cn(inputClass, "max-w-[160px]")}
         />
       </div>
       <div className="space-y-2">

@@ -1,6 +1,5 @@
 "use client";
 
-import { format } from "date-fns";
 import { Plus, Ruler, Trash2, TrendingUp } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
@@ -12,10 +11,12 @@ import {
   useGrowthMeasurements,
 } from "@/hooks/use-growth";
 import { useBabyStore } from "@/stores/baby-store";
-import { formatDate } from "@/utils/date";
+import { formatDate, getTodayLocal } from "@/utils/date";
+import { parseBirthDate } from "@/utils/age";
 import type { Locale } from "@/types";
 import { IdoButton } from "@/components/idoland/ido-button";
 import { IdoPanel } from "@/components/idoland/ido-panel";
+import { HebrewDateInput } from "@/components/shared/hebrew-date-input";
 import { LegalDisclaimer } from "@/components/shared/legal-disclaimer";
 import { NoBabyPrompt } from "@/components/shared/no-baby-prompt";
 import { StatCard } from "@/components/shared/stat-card";
@@ -25,13 +26,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "rounded-2xl border-[var(--stroke)] bg-white/90 py-3 shadow-sm focus-visible:ring-[var(--grass)]";
+  "rounded-xl border-[var(--stroke)] bg-white/90 py-2.5 shadow-sm focus-visible:ring-[var(--grass)]";
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--grass-deep)]">
+    <h3 className="font-[family-name:var(--font-display)] text-base font-bold text-[var(--grass-deep)]">
       {children}
     </h3>
+  );
+}
+
+function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn("space-y-1.5", className)}>
+      <Label className="text-sm font-semibold text-[var(--ink)]">{label}</Label>
+      {children}
+    </div>
   );
 }
 
@@ -47,7 +57,7 @@ export function GrowthContent() {
   const createMeasurement = useCreateGrowthMeasurement(baby?._id ?? null);
   const deleteMeasurement = useDeleteGrowthMeasurement(baby?._id ?? null);
 
-  const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [date, setDate] = useState(getTodayLocal());
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
   const [head, setHead] = useState("");
@@ -63,7 +73,6 @@ export function GrowthContent() {
 
   const latest = measurements?.[0];
   const prev = measurements?.[1];
-
   const weightDelta =
     latest?.weight && prev?.weight ? latest.weight - prev.weight : undefined;
 
@@ -79,7 +88,7 @@ export function GrowthContent() {
     try {
       await createMeasurement.mutateAsync({
         babyId: baby._id,
-        date: new Date(date).toISOString(),
+        date: parseBirthDate(date).toISOString(),
         weight: weightNum,
         height: height ? Number(height) : undefined,
         headCircumference: head ? Number(head) : undefined,
@@ -96,152 +105,148 @@ export function GrowthContent() {
   }
 
   return (
-    <div className="space-y-6">
-      <IdoPanel className="space-y-5 p-5 sm:p-6">
+    <div className="mx-auto max-w-lg space-y-4">
+      <IdoPanel className="space-y-4 p-4 sm:p-5">
         <div className="flex items-center gap-2">
-          <TrendingUp className="size-5 text-[var(--grass-deep)]" />
+          <TrendingUp className="size-4 text-[var(--grass-deep)]" />
           <SectionTitle>{t("latest")}</SectionTitle>
         </div>
 
         {isLoading ? (
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-3 gap-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-20 animate-pulse rounded-2xl bg-white/50" />
+              <div key={i} className="h-16 animate-pulse rounded-xl bg-white/50" />
             ))}
           </div>
         ) : latest ? (
           <>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {t("measuredOn")} {formatDate(latest.date, locale)}
             </p>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-3 gap-2">
               <StatCard
+                className="p-3"
                 label={t("weight")}
-                value={latest.weight ? `${latest.weight} ${tc("grams")}` : "—"}
-                subValue={
-                  weightDelta !== undefined
-                    ? `${weightDelta > 0 ? "+" : ""}${weightDelta} ${tc("grams")}`
-                    : undefined
-                }
+                value={latest.weight ? `${latest.weight}` : "—"}
+                subValue={latest.weight ? tc("grams") : undefined}
               />
               <StatCard
+                className="p-3"
                 label={t("height")}
-                value={latest.height ? `${latest.height} ${tc("cm")}` : "—"}
+                value={latest.height ? `${latest.height}` : "—"}
+                subValue={latest.height ? tc("cm") : undefined}
               />
               <StatCard
+                className="p-3"
                 label={t("head")}
-                value={
-                  latest.headCircumference
-                    ? `${latest.headCircumference} ${tc("cm")}`
-                    : "—"
-                }
+                value={latest.headCircumference ? `${latest.headCircumference}` : "—"}
+                subValue={latest.headCircumference ? tc("cm") : undefined}
               />
             </div>
+            {weightDelta !== undefined && (
+              <p className="text-center text-xs text-muted-foreground">
+                {weightDelta > 0 ? "+" : ""}
+                {weightDelta} {tc("grams")} {t("sinceLast")}
+              </p>
+            )}
           </>
         ) : (
-          <p className="rounded-2xl border border-dashed border-[var(--stroke)] bg-white/50 p-6 text-center text-muted-foreground">
+          <p className="rounded-xl border border-dashed border-[var(--stroke)] bg-white/50 px-4 py-5 text-center text-sm text-muted-foreground">
             {t("noMeasurements")}
           </p>
         )}
       </IdoPanel>
 
       <div ref={formRef}>
-        <IdoPanel className="space-y-5 p-5 sm:p-6">
+        <IdoPanel className="space-y-4 p-4 sm:p-5">
           <div className="flex items-center gap-2">
-            <Plus className="size-5 text-[var(--coral)]" />
+            <Plus className="size-4 text-[var(--coral)]" />
             <SectionTitle>{t("addMeasurement")}</SectionTitle>
           </div>
 
-          <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2 sm:col-span-2">
-              <Label>{tc("date")}</Label>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className={inputClass}
-              />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Field label={tc("date")} className="max-w-[160px]">
+              <HebrewDateInput value={date} onChange={setDate} className={inputClass} />
+            </Field>
+
+            <div className="grid grid-cols-3 gap-3">
+              <Field label={`${t("weight")} (${tc("grams")})`}>
+                <Input
+                  type="number"
+                  min={0}
+                  placeholder="6500"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label={`${t("height")} (${tc("cm")})`}>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.1"
+                  placeholder="65"
+                  value={height}
+                  onChange={(e) => setHeight(e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label={`${t("head")} (${tc("cm")})`}>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.1"
+                  placeholder="42"
+                  value={head}
+                  onChange={(e) => setHead(e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
             </div>
-            <div className="space-y-2">
-              <Label>{t("weight")} ({tc("grams")})</Label>
-              <Input
-                type="number"
-                min={0}
-                placeholder="6500"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t("height")} ({tc("cm")})</Label>
-              <Input
-                type="number"
-                min={0}
-                step="0.1"
-                placeholder="65"
-                value={height}
-                onChange={(e) => setHeight(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t("head")} ({tc("cm")})</Label>
-              <Input
-                type="number"
-                min={0}
-                step="0.1"
-                placeholder="42"
-                value={head}
-                onChange={(e) => setHead(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label>{t("notes")}</Label>
+
+            <Field label={t("notes")}>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className={cn(inputClass, "min-h-[80px]")}
+                className={cn(inputClass, "min-h-[64px] resize-none")}
               />
-            </div>
-            <div className="sm:col-span-2">
-              <IdoButton type="submit" wide disabled={createMeasurement.isPending}>
-                {createMeasurement.isPending ? tc("loading") : tc("save")}
-              </IdoButton>
-            </div>
+            </Field>
+
+            <IdoButton type="submit" disabled={createMeasurement.isPending} className="w-full sm:w-auto sm:min-w-[140px]">
+              {createMeasurement.isPending ? tc("loading") : tc("save")}
+            </IdoButton>
           </form>
         </IdoPanel>
       </div>
 
-      <IdoPanel className="space-y-4 p-5 sm:p-6">
+      <IdoPanel className="space-y-3 p-4 sm:p-5">
         <div className="flex items-center gap-2">
-          <Ruler className="size-5 text-[var(--grass-deep)]" />
+          <Ruler className="size-4 text-[var(--grass-deep)]" />
           <SectionTitle>{t("history")}</SectionTitle>
         </div>
 
         {isLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {[1, 2].map((i) => (
-              <div key={i} className="h-16 animate-pulse rounded-2xl bg-white/50" />
+              <div key={i} className="h-12 animate-pulse rounded-xl bg-white/50" />
             ))}
           </div>
         ) : !measurements?.length ? (
-          <p className="text-center text-muted-foreground">{tc("noData")}</p>
+          <p className="text-center text-sm text-muted-foreground">{tc("noData")}</p>
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-2">
             {measurements.map((m) => (
               <li
                 key={m._id}
-                className="flex items-center gap-3 rounded-2xl border border-[var(--stroke)] bg-white/80 p-4 shadow-sm"
+                className="flex items-center gap-2 rounded-xl border border-[var(--stroke)] bg-white/80 px-3 py-2.5"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold">{formatDate(m.date, locale)}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm font-semibold">{formatDate(m.date, locale)}</p>
+                  <p className="text-xs text-muted-foreground">
                     {[
                       m.weight && `${m.weight} ${tc("grams")}`,
                       m.height && `${m.height} ${tc("cm")}`,
-                      m.headCircumference && `${t("head")} ${m.headCircumference} ${tc("cm")}`,
+                      m.headCircumference && `${m.headCircumference} ${tc("cm")} ראש`,
                     ]
                       .filter(Boolean)
                       .join(" · ")}
@@ -250,10 +255,10 @@ export function GrowthContent() {
                 <button
                   type="button"
                   onClick={() => deleteMeasurement.mutate(m._id)}
-                  className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
                   aria-label={tc("delete")}
                 >
-                  <Trash2 className="size-4" />
+                  <Trash2 className="size-3.5" />
                 </button>
               </li>
             ))}

@@ -1,6 +1,7 @@
-import { format, formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow, isValid } from "date-fns";
 import { he, enUS } from "date-fns/locale";
 import type { Locale } from "@/types";
+import { parseBirthDate } from "@/utils/age";
 
 export {
   calculateDailyFormulaAmount,
@@ -13,25 +14,70 @@ export {
 
 const locales = { he, en: enUS };
 
+/** Hebrew display pattern: 18.03.26 */
+export const HE_DATE_PATTERN = "d.MM.yy";
+
 export function getDateLocale(locale: Locale) {
   return locales[locale];
 }
 
-export function formatDate(date: Date | string, locale: Locale, pattern = "PPP") {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return format(d, pattern, { locale: getDateLocale(locale) });
+function toLocalDate(date: Date | string): Date {
+  return typeof date === "string" ? parseBirthDate(date) : date;
 }
 
-/** Local calendar date, e.g. 16.07.2026 */
+/** yyyy-MM-dd → 18.03.26 */
+export function isoToDisplay(iso: string): string {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return "";
+  const [y, m, d] = iso.split("T")[0].split("-").map(Number);
+  const yy = String(y % 100).padStart(2, "0");
+  const mm = String(m).padStart(2, "0");
+  return `${d}.${mm}.${yy}`;
+}
+
+/** 18.03.26 / 18.3.2026 → yyyy-MM-dd */
+export function displayToIso(display: string): string | null {
+  const cleaned = display.trim().replace(/[/\-]/g, ".");
+  const match = cleaned.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2}|\d{4})$/);
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  let year = Number(match[3]);
+  if (year < 100) year += 2000;
+
+  const date = new Date(year, month - 1, day);
+  if (
+    !isValid(date) ||
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return format(date, "yyyy-MM-dd");
+}
+
+export function formatDate(
+  date: Date | string,
+  locale: Locale = "he",
+  pattern?: string
+) {
+  const d = toLocalDate(date);
+  const p = pattern ?? (locale === "he" ? HE_DATE_PATTERN : "PPP");
+  return format(d, p, { locale: getDateLocale(locale) });
+}
+
 export function formatShortDate(date: Date | string, locale: Locale = "he") {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return format(d, "d.M.yyyy", { locale: getDateLocale(locale) });
+  return formatDate(date, locale, HE_DATE_PATTERN);
 }
 
-/** Date + time for meal logs, e.g. 16.07.2026 · 14:30 */
+/** 18.03.26 · 14:30 */
 export function formatDateTime(date: Date | string, locale: Locale = "he") {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return format(d, "d.M.yyyy · HH:mm", { locale: getDateLocale(locale) });
+  const d = toLocalDate(date);
+  const datePart = format(d, HE_DATE_PATTERN, { locale: getDateLocale(locale) });
+  const timePart = format(d, "HH:mm");
+  return `${datePart} · ${timePart}`;
 }
 
 export function getTodayLocal(): string {
@@ -50,6 +96,6 @@ export function combineLocalDateTime(dateStr: string, timeStr: string): Date {
 }
 
 export function formatRelative(date: Date | string, locale: Locale) {
-  const d = typeof date === "string" ? new Date(date) : date;
+  const d = toLocalDate(date);
   return formatDistanceToNow(d, { addSuffix: true, locale: getDateLocale(locale) });
 }

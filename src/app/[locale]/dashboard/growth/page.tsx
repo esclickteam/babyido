@@ -9,7 +9,7 @@ export default async function GrowthPage({ params }: { params: Promise<{ locale:
   setRequestLocale(locale);
   const t = await getTranslations("nav");
   return (
-    <PageContainer title={t("growth")}>
+    <PageContainer title={t("growth")} className="max-w-none">
       <Suspense fallback={<Skeleton className="h-96 w-full rounded-3xl" />}>
         <GrowthContent />
       </Suspense>

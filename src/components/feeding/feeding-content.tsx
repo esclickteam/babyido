@@ -16,6 +16,7 @@ import { formatDate, formatDateTime, combineLocalDateTime, getNowLocalTime, getT
 import type { Locale } from "@/types";
 import { IdoButton } from "@/components/idoland/ido-button";
 import { IdoPanel } from "@/components/idoland/ido-panel";
+import { HebrewDateInput } from "@/components/shared/hebrew-date-input";
 import { DailyProgress } from "@/components/shared/daily-progress";
 import { LegalDisclaimer } from "@/components/shared/legal-disclaimer";
 import { NoBabyPrompt } from "@/components/shared/no-baby-prompt";
@@ -120,11 +121,10 @@ export function FeedingContent() {
       <IdoPanel className="space-y-5 p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <SectionTitle>{t("dailyProgress")}</SectionTitle>
-          <Input
-            type="date"
+          <HebrewDateInput
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className={cn(inputClass, "w-auto max-w-[180px]")}
+            onChange={setSelectedDate}
+            className={cn(inputClass, "max-w-[160px]")}
           />
         </div>
 
@@ -224,11 +224,10 @@ export function FeedingContent() {
             </div>
             <div className="space-y-2">
               <Label>{tc("date")}</Label>
-              <Input
-                type="date"
+              <HebrewDateInput
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className={inputClass}
+                onChange={setSelectedDate}
+                className={cn(inputClass, "max-w-[160px]")}
               />
             </div>
             <div className="space-y-2">
