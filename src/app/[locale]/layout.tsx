@@ -27,7 +27,6 @@ export const metadata: Metadata = {
   },
   description:
     "אפליקציית מעקב חכמה לתינוקות: גדילה, התפתחות, האכלה, שינה ועוד.",
-  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
