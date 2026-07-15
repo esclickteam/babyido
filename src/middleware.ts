@@ -4,18 +4,28 @@ import { routing } from "./i18n/routing";
 
 const intlMiddleware = createMiddleware(routing);
 
-export default function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+function stripLegacyLocalePrefix(pathname: string): string | null {
+  if (pathname === "/he" || pathname === "/en") {
+    return "/";
+  }
+  if (pathname.startsWith("/he/") || pathname.startsWith("/en/")) {
+    return pathname.replace(/^\/(he|en)/, "") || "/";
+  }
+  return null;
+}
 
-  if (pathname.startsWith("/en")) {
+export default function middleware(request: NextRequest) {
+  const stripped = stripLegacyLocalePrefix(request.nextUrl.pathname);
+
+  if (stripped) {
     const url = request.nextUrl.clone();
-    url.pathname = pathname.replace(/^\/en/, "/he");
-    return NextResponse.redirect(url);
+    url.pathname = stripped;
+    return NextResponse.redirect(url, 308);
   }
 
   return intlMiddleware(request);
 }
 
 export const config = {
-  matcher: ["/", "/(he|en)/:path*"],
+  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
 };
