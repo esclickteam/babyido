@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/config";
 import { getUserBabies } from "@/lib/data/babies";
 import { connectDB } from "@/lib/db/mongodb";
+import { dateOnlyToMongo } from "@/utils/date";
 import { babySchema } from "@/lib/validations/baby";
 import { serializeBaby } from "@/lib/data/serialize-baby";
 import { Baby } from "@/models/Baby";
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
     const baby = await Baby.create({
       userId: session.user.id,
       ...parsed.data,
-      birthDate: new Date(parsed.data.birthDate),
+      birthDate: dateOnlyToMongo(parsed.data.birthDate),
       photoUrl: parsed.data.photoUrl || undefined,
       allergies: parsed.data.allergies ?? [],
     });

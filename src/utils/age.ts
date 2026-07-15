@@ -1,17 +1,19 @@
 import { addMonths, differenceInDays, differenceInMonths } from "date-fns";
 import type { Locale } from "@/types";
 
-/** Parse birth date as local calendar date (avoids UTC timezone shifts). */
+/** Parse any date value to local calendar day (no timezone shift). */
 export function parseBirthDate(birthDate: Date | string): Date {
-  if (birthDate instanceof Date) return birthDate;
+  if (birthDate instanceof Date) {
+    return new Date(birthDate.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+  }
 
-  const dateOnly = birthDate.split("T")[0];
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
-    const [year, month, day] = dateOnly.split("-").map(Number);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+    const [year, month, day] = birthDate.split("-").map(Number);
     return new Date(year, month - 1, day);
   }
 
-  return new Date(birthDate);
+  const d = new Date(birthDate);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
 export interface BabyAgeParts {

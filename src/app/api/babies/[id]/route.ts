@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/config";
 import { connectDB } from "@/lib/db/mongodb";
+import { dateOnlyToMongo, toDateOnlyString } from "@/utils/date";
 import { babySchema } from "@/lib/validations/baby";
 import { Baby } from "@/models/Baby";
 
@@ -10,7 +11,7 @@ function serializeBaby(baby: InstanceType<typeof Baby>) {
     userId: baby.userId.toString(),
     name: baby.name,
     photoUrl: baby.photoUrl,
-    birthDate: baby.birthDate.toISOString(),
+    birthDate: toDateOnlyString(baby.birthDate),
     birthTime: baby.birthTime,
     gender: baby.gender,
     gestationalWeek: baby.gestationalWeek,
@@ -74,7 +75,7 @@ export async function PUT(
       { _id: id, userId: session.user.id },
       {
         ...parsed.data,
-        birthDate: new Date(parsed.data.birthDate),
+        birthDate: dateOnlyToMongo(parsed.data.birthDate),
         photoUrl: parsed.data.photoUrl || undefined,
         allergies: parsed.data.allergies ?? [],
       },

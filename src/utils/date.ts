@@ -22,15 +22,30 @@ export function getDateLocale(locale: Locale) {
 }
 
 function toLocalDate(date: Date | string): Date {
-  return typeof date === "string" ? parseBirthDate(date) : date;
+  return parseBirthDate(date);
+}
+
+/** yyyy-MM-dd for API / storage */
+export function toDateOnlyString(date: Date | string): string {
+  const d = parseBirthDate(date);
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+/** Store date-only in MongoDB at noon UTC (no off-by-one day) */
+export function dateOnlyToMongo(dateStr: string): Date {
+  const normalized = dateStr.split("T")[0];
+  const [y, m, d] = normalized.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
 }
 
 /** yyyy-MM-dd → 18/03/2026 */
 export function isoToDisplay(iso: string): string {
-  if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return "";
-  const [y, m, d] = iso.split("T")[0].split("-").map(Number);
-  const mm = String(m).padStart(2, "0");
-  return `${d}/${mm}/${y}`;
+  if (!iso) return "";
+  const d = parseBirthDate(iso);
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${d.getDate()}/${mm}/${d.getFullYear()}`;
 }
 
 /** 18/03/2026 → yyyy-MM-dd */

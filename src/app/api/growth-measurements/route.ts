@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/config";
 import { getOwnedBaby } from "@/lib/api/baby-access";
 import { connectDB } from "@/lib/db/mongodb";
+import { dateOnlyToMongo, toDateOnlyString } from "@/utils/date";
 import { growthMeasurementSchema } from "@/lib/validations/modules";
 import { GrowthMeasurement } from "@/models/GrowthMeasurement";
 
@@ -28,7 +29,7 @@ export async function GET(request: Request) {
       items.map((m) => ({
         _id: String(m._id),
         babyId,
-        date: new Date(m.date).toISOString(),
+        date: toDateOnlyString(m.date),
         weight: m.weight,
         height: m.height,
         headCircumference: m.headCircumference,
@@ -59,9 +60,10 @@ export async function POST(request: Request) {
     }
 
     await connectDB();
+    const dateStr = toDateOnlyString(parsed.data.date);
     const item = await GrowthMeasurement.create({
       babyId: parsed.data.babyId,
-      date: new Date(parsed.data.date),
+      date: dateOnlyToMongo(dateStr),
       weight: parsed.data.weight,
       height: parsed.data.height,
       headCircumference: parsed.data.headCircumference,
@@ -72,7 +74,7 @@ export async function POST(request: Request) {
       {
         _id: item._id.toString(),
         babyId: parsed.data.babyId,
-        date: item.date.toISOString(),
+        date: dateStr,
         weight: item.weight,
         height: item.height,
         headCircumference: item.headCircumference,

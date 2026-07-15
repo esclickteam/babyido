@@ -12,7 +12,6 @@ import {
 } from "@/hooks/use-growth";
 import { useBabyStore } from "@/stores/baby-store";
 import { formatDate, getTodayLocal } from "@/utils/date";
-import { parseBirthDate } from "@/utils/age";
 import type { Locale } from "@/types";
 import { IdoButton } from "@/components/idoland/ido-button";
 import { IdoPanel } from "@/components/idoland/ido-panel";
@@ -88,7 +87,7 @@ export function GrowthContent() {
     try {
       await createMeasurement.mutateAsync({
         babyId: baby._id,
-        date: parseBirthDate(date).toISOString(),
+        date: date,
         weight: weightNum,
         height: height ? Number(height) : undefined,
         headCircumference: head ? Number(head) : undefined,

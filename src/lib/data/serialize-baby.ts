@@ -1,4 +1,5 @@
 import type { Baby } from "@/types";
+import { toDateOnlyString } from "@/utils/date";
 
 export function serializeBaby(baby: {
   _id: { toString(): string };
@@ -25,7 +26,7 @@ export function serializeBaby(baby: {
     userId: baby.userId.toString(),
     name: baby.name,
     photoUrl: baby.photoUrl,
-    birthDate: baby.birthDate.toISOString(),
+    birthDate: toDateOnlyString(baby.birthDate),
     birthTime: baby.birthTime,
     gender: baby.gender,
     gestationalWeek: baby.gestationalWeek,

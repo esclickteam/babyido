@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/config";
 import { getOwnedBaby } from "@/lib/api/baby-access";
 import { connectDB } from "@/lib/db/mongodb";
+import { dateOnlyToMongo, toDateOnlyString } from "@/utils/date";
 import { tastingEntrySchema } from "@/lib/validations/modules";
 import { TastingEntry } from "@/models/TastingEntry";
 
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
         babyId,
         foodName: t.foodName,
         category: t.category,
-        tastedDate: t.tastedDate ? new Date(t.tastedDate).toISOString() : undefined,
+        tastedDate: t.tastedDate ? toDateOnlyString(t.tastedDate) : undefined,
         reactions: t.reactions ?? [],
         isAllergen: t.isAllergen,
         recommendedAge: t.recommendedAge,
@@ -63,11 +64,12 @@ export async function POST(request: Request) {
     }
 
     await connectDB();
+    const tastedDateStr = toDateOnlyString(parsed.data.tastedDate);
     const item = await TastingEntry.create({
       babyId: parsed.data.babyId,
       foodName: parsed.data.foodName,
       category: parsed.data.category,
-      tastedDate: new Date(parsed.data.tastedDate),
+      tastedDate: dateOnlyToMongo(tastedDateStr),
       reactions: parsed.data.reactions ?? [],
       isAllergen: parsed.data.isAllergen,
       recommendedAge: parsed.data.recommendedAge,
@@ -82,7 +84,7 @@ export async function POST(request: Request) {
         babyId: parsed.data.babyId,
         foodName: item.foodName,
         category: item.category,
-        tastedDate: item.tastedDate?.toISOString(),
+        tastedDate: tastedDateStr,
         reactions: item.reactions,
         isAllergen: item.isAllergen,
         recommendedAge: item.recommendedAge,
