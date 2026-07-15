@@ -10,8 +10,8 @@ interface PageContainerProps {
 export function PageContainer({ children, className, title, description }: PageContainerProps) {
   return (
     <div
-      className={cn(
-        "ido-sprout mx-auto w-full max-w-7xl space-y-8 p-4 md:p-8",
+        className={cn(
+        "mx-auto w-full space-y-8 p-4 md:p-6 lg:p-8",
         className
       )}
     >

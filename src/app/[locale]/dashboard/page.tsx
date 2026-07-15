@@ -28,7 +28,7 @@ export default async function DashboardPage({
   }
 
   return (
-    <PageContainer>
+    <PageContainer className="max-w-none">
       <DashboardContent
         initialStats={initialStats}
         selectedBabyId={selectedBabyId}

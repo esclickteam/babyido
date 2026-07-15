@@ -36,6 +36,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -129,7 +130,7 @@ function AppSidebar() {
   const ta = useTranslations("auth");
 
   return (
-    <Sidebar variant="inset" collapsible="icon">
+    <Sidebar variant="sidebar" collapsible="offcanvas">
       <SidebarHeader className="p-4">
         <Link href="/dashboard" className="flex items-center gap-3">
           <div className="ido-brand-mark" />
@@ -173,6 +174,20 @@ function AppSidebar() {
   );
 }
 
+function SidebarOverlay() {
+  const { open, isMobile, setOpen } = useSidebar();
+  if (!open || isMobile) return null;
+
+  return (
+    <button
+      type="button"
+      aria-label="Close menu"
+      className="fixed inset-0 z-[9] hidden bg-black/20 md:block"
+      onClick={() => setOpen(false)}
+    />
+  );
+}
+
 export function AppShell({
   children,
   user,
@@ -183,10 +198,11 @@ export function AppShell({
   useBabies();
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <AppSidebar />
-      <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b border-[var(--stroke)] bg-white/90 px-4 md:px-6">
+      <SidebarOverlay />
+      <SidebarInset className="ido-sprout min-h-svh w-full min-w-0 overflow-x-hidden">
+        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b border-[var(--stroke)] bg-white/90 px-4 backdrop-blur-md md:px-6">
           <SidebarTrigger className="rounded-xl" />
           <Separator orientation="vertical" className="h-6" />
           <BabySwitcher />
@@ -209,7 +225,7 @@ export function AppShell({
             )}
           </div>
         </header>
-        <main className="flex-1">{children}</main>
+        <main className="flex min-h-[calc(100svh-4rem)] w-full flex-1 flex-col">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

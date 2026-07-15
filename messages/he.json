@@ -97,7 +97,9 @@
     "notifications": "התראות",
     "noBaby": "עדיין לא הוספתם תינוק",
     "addBaby": "הוספת תינוק",
-    "selectBaby": "בחירת תינוק"
+    "selectBaby": "בחירת תינוק",
+    "todayDate": "היום {date}",
+    "feedingOfGoal": "אכל {eaten} מתוך {goal} מ\"ל · נותרו {remaining} מ\"ל"
   },
   "baby": {
     "profile": "פרופיל תינוק",
@@ -168,7 +170,10 @@
     "mealSaved": "הארוחה נשמרה!",
     "amountRequired": "יש להזין כמות במ\"ל",
     "todayMeals": "ארוחות היום",
-    "remainingAfter": "נותרו {amount} מ\"ל"
+    "remainingAfter": "נותרו {amount} מ\"ל",
+    "viewFull": "מעקב מלא",
+    "mealLogs": "יומן ארוחות",
+    "noMealsToday": "עדיין לא נרשמו ארוחות היום"
   },
   "growth": {
     "latest": "מדידה אחרונה",

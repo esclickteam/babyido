@@ -1,6 +1,6 @@
 "use client";
 
-import { differenceInMonths, format } from "date-fns";
+import { format } from "date-fns";
 import { Check, ChevronLeft, Plus, Sparkles, Trash2, UtensilsCrossed } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -11,6 +11,7 @@ import { TASTING_ORDER } from "@/constants/tastings";
 import { useCreateTasting, useDeleteTasting, useTastings } from "@/hooks/use-tastings";
 import { useBabyStore } from "@/stores/baby-store";
 import { formatDate } from "@/utils/date";
+import { getBabyAgeInMonths } from "@/utils/age";
 import type { Locale } from "@/types";
 import { IdoButton } from "@/components/idoland/ido-button";
 import { IdoPanel } from "@/components/idoland/ido-panel";
@@ -68,9 +69,7 @@ export function TastingsContent() {
     }
   }, [searchParams]);
 
-  const babyAgeMonths = baby
-    ? differenceInMonths(new Date(), new Date(baby.birthDate))
-    : 0;
+  const babyAgeMonths = baby ? getBabyAgeInMonths(baby.birthDate) : 0;
 
   const tastedFoodIds = useMemo(
     () => new Set(tastings?.map((t) => t.foodId ?? t.foodName) ?? []),

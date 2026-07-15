@@ -1,8 +1,5 @@
 "use client";
 
-import { format } from "date-fns";
-import { Calculator, Plus, Trash2, Utensils } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -13,7 +10,7 @@ import {
   useFeedingSummary,
 } from "@/hooks/use-feeding";
 import { useBabyStore } from "@/stores/baby-store";
-import { formatDate } from "@/utils/date";
+import { formatDate, formatDateTime, combineLocalDateTime, getNowLocalTime, getTodayLocal } from "@/utils/date";
 import type { Locale } from "@/types";
 import { IdoButton } from "@/components/idoland/ido-button";
 import { IdoPanel } from "@/components/idoland/ido-panel";
@@ -54,11 +51,11 @@ export function FeedingContent() {
   const searchParams = useSearchParams();
   const formRef = useRef<HTMLDivElement>(null);
 
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [selectedDate, setSelectedDate] = useState(getTodayLocal());
   const [mealsPerDay, setMealsPerDay] = useState(8);
   const [type, setType] = useState<FeedingType>("formula");
   const [amount, setAmount] = useState("");
-  const [time, setTime] = useState(format(new Date(), "HH:mm"));
+  const [time, setTime] = useState(getNowLocalTime());
   const [notes, setNotes] = useState("");
 
   const { data: summary, isLoading } = useFeedingSummary(baby?._id ?? null, selectedDate, mealsPerDay);
@@ -97,9 +94,7 @@ export function FeedingContent() {
       toast.error(t("amountRequired"));
       return;
     }
-    const [h, m] = time.split(":").map(Number);
-    const dateTime = new Date(selectedDate);
-    dateTime.setHours(h, m, 0, 0);
+    const dateTime = combineLocalDateTime(selectedDate, time);
 
     try {
       await createEntry.mutateAsync({
@@ -112,7 +107,7 @@ export function FeedingContent() {
       toast.success(t("mealSaved"));
       setAmount("");
       setNotes("");
-      setTime(format(new Date(), "HH:mm"));
+      setTime(getNowLocalTime());
     } catch {
       toast.error(tc("error"));
     }
@@ -292,7 +287,7 @@ export function FeedingContent() {
                     {t(entry.type)} · {entry.amount} {tc("ml")}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {formatDate(entry.time, locale, "HH:mm")} · {t("remainingAfter", { amount: remainingAfter })}
+                    {formatDateTime(entry.time, locale)} · {t("remainingAfter", { amount: remainingAfter })}
                   </p>
                 </div>
                 <button
