@@ -21,6 +21,7 @@ const heebo = Heebo({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://babyido.com"),
   title: {
     default: "BabyIdo — הכל שהתינוק שלכם צריך, במקום אחד.",
     template: "%s | BabyIdo",
