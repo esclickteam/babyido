@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BabyDo
 
-## Getting Started
+**Everything your baby needs, in one place.**
 
-First, run the development server:
+מערכת Web מודרנית למעקב אחר גדילה, התפתחות ותזונת תינוקות — בעברית ובאנגלית.
+
+## Stack
+
+- Next.js 16 (App Router) + TypeScript
+- Tailwind CSS 4 + shadcn/ui
+- Framer Motion
+- MongoDB + Mongoose
+- NextAuth (Credentials + Google)
+- TanStack Query + Zustand
+- next-intl (he/en, RTL)
+
+## התחלה מהירה
 
 ```bash
+# 1. התקנת תלויות
+npm install
+
+# 2. הגדרת משתני סביבה
+cp .env.example .env.local
+# ערכו MONGODB_URI ו-AUTH_SECRET
+
+# 3. הרצה
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+פתחו [http://localhost:3000/he](http://localhost:3000/he)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## מבנה הפרויקט
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/[locale]/          # דפים (landing, auth, dashboard)
+├── app/api/               # API routes
+├── components/            # UI לפי תחום (auth, baby, dashboard, layout...)
+├── constants/             # קבועים (ניווט, האכלה, אבני דרך)
+├── hooks/                 # React hooks
+├── i18n/                  # תרגומים וניווט
+├── lib/                   # auth, db, validations
+├── models/                # Mongoose schemas
+├── services/              # קריאות API
+├── stores/                # Zustand state
+├── types/                 # TypeScript types
+└── utils/                 # פונקציות עזר
+```
 
-## Learn More
+## מודולים
 
-To learn more about Next.js, take a look at the following resources:
+| מודול | סטטוס |
+|-------|--------|
+| Auth (התחברות/הרשמה/Google) | ✅ |
+| Dashboard + Sidebar | ✅ |
+| פרופיל תינוק (ריבוי ילדים) | ✅ |
+| מחשבון האכלה | ✅ |
+| הגדרות (שפה/ערכת נושא) | ✅ |
+| גדילה, האכלה, שינה, טעימות... | 🏗️ scaffold |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## משתני סביבה
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+ראו `.env.example` לרשימה מלאה.
 
-## Deploy on Vercel
+## הערה משפטית
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+המידע באפליקציה מיועד למטרות מידע ומעקב בלבד ואינו מהווה ייעוץ רפואי.
