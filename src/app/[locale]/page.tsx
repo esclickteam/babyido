@@ -2,7 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { IdoButton } from "@/components/idoland/ido-button";
 import { SkyDecor } from "@/components/idoland/sky-decor";
-import { BrandLogo } from "@/components/shared/brand-logo";
+import { BrandSymbol, BrandWordmark } from "@/components/shared/brand-logo";
 import { LegalDisclaimer } from "@/components/shared/legal-disclaimer";
 import { Link } from "@/i18n/navigation";
 
@@ -26,14 +26,14 @@ export default async function LandingPage({
     <div className="ido-sprout relative min-h-screen">
       <SkyDecor />
 
-      <header className="relative z-10 mx-auto flex min-h-[5.5rem] max-w-6xl items-center justify-end px-6 py-6 md:min-h-[6.5rem] md:py-8">
-        <Link
-          href="/"
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-        >
-          <BrandLogo size="header" priority />
+      <header className="relative z-10 mx-auto grid max-w-6xl grid-cols-3 items-center gap-4 px-6 py-6 md:py-8">
+        <Link href="/" className="flex justify-start">
+          <BrandSymbol size="header" priority />
         </Link>
-        <div className="relative z-10 flex flex-wrap items-center gap-2">
+        <Link href="/" className="flex justify-center">
+          <BrandWordmark size="header" priority />
+        </Link>
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <IdoButton href="/login" variant="ghost" className="!px-5 !py-2.5 text-sm">
             {t("signIn")}
           </IdoButton>

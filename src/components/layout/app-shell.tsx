@@ -14,7 +14,7 @@ import { getExactAge } from "@/utils/age";
 import { setSelectedBabyCookie } from "@/lib/baby-selection.client";
 import type { Locale } from "@/types";
 import { LinkButton } from "@/components/shared/link-button";
-import { BrandLogo } from "@/components/shared/brand-logo";
+import { BrandSymbol, BrandWordmark } from "@/components/shared/brand-logo";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -136,8 +136,9 @@ function AppSidebar() {
       className="[&_[data-sidebar=sidebar]]:border-l [&_[data-sidebar=sidebar]]:border-[var(--stroke)] [&_[data-sidebar=sidebar]]:bg-white"
     >
       <SidebarHeader className="border-b border-[var(--stroke)] p-5">
-        <Link href="/dashboard" className="flex items-center justify-center py-1">
-          <BrandLogo size="sidebar" className="group-data-[collapsible=icon]:h-10" />
+        <Link href="/dashboard" className="flex flex-col items-center justify-center gap-2 py-1">
+          <BrandSymbol size="sidebar" className="group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10" />
+          <BrandWordmark size="sidebar" className="group-data-[collapsible=icon]:hidden" />
         </Link>
       </SidebarHeader>
 
@@ -200,19 +201,17 @@ export function AppShell({
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <SidebarInset className="ido-sprout min-h-svh min-w-0 flex-1 overflow-x-hidden">
-        <header className="relative sticky top-0 z-10 flex h-20 shrink-0 items-center gap-3 border-b border-[var(--stroke)] bg-white/90 px-4 backdrop-blur-md md:h-24 md:px-6">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
+        <header className="relative sticky top-0 z-10 grid h-20 shrink-0 grid-cols-3 items-center gap-3 border-b border-[var(--stroke)] bg-white/90 px-4 backdrop-blur-md md:h-24 md:px-6">
+          <Link href="/dashboard" className="flex justify-start">
+            <BrandSymbol size="dashboard" />
+          </Link>
+          <Link href="/dashboard" className="hidden justify-center sm:flex">
+            <BrandWordmark size="dashboard" />
+          </Link>
+          <div className="flex items-center justify-end gap-2">
             <SidebarTrigger className="rounded-xl md:hidden" />
             <Separator orientation="vertical" className="h-6 md:hidden" />
             <BabySwitcher />
-          </div>
-          <Link
-            href="/dashboard"
-            className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 sm:block"
-          >
-            <BrandLogo size="dashboard" />
-          </Link>
-          <div className="ms-auto flex items-center gap-2">
             <QuickAddSheet />
             <ThemeToggle />
             {user.image ? (
