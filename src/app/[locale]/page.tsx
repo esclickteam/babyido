@@ -26,9 +26,12 @@ export default async function LandingPage({
     <div className="ido-sprout relative min-h-screen">
       <SkyDecor />
 
-      <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-end px-6 py-5">
-        <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-          <BrandLogo size="md" priority />
+      <header className="relative z-10 mx-auto flex min-h-[5.5rem] max-w-6xl items-center justify-end px-6 py-6 md:min-h-[6.5rem] md:py-8">
+        <Link
+          href="/"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+        >
+          <BrandLogo size="header" priority />
         </Link>
         <div className="relative z-10 flex flex-wrap items-center gap-2">
           <IdoButton href="/login" variant="ghost" className="!px-5 !py-2.5 text-sm">

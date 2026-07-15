@@ -136,8 +136,8 @@ function AppSidebar() {
       className="[&_[data-sidebar=sidebar]]:border-l [&_[data-sidebar=sidebar]]:border-[var(--stroke)] [&_[data-sidebar=sidebar]]:bg-white"
     >
       <SidebarHeader className="border-b border-[var(--stroke)] p-5">
-        <Link href="/dashboard" className="flex items-center justify-center">
-          <BrandLogo size="sm" className="group-data-[collapsible=icon]:h-8" />
+        <Link href="/dashboard" className="flex items-center justify-center py-1">
+          <BrandLogo size="sidebar" className="group-data-[collapsible=icon]:h-10" />
         </Link>
       </SidebarHeader>
 
@@ -200,7 +200,7 @@ export function AppShell({
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <SidebarInset className="ido-sprout min-h-svh min-w-0 flex-1 overflow-x-hidden">
-        <header className="relative sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b border-[var(--stroke)] bg-white/90 px-4 backdrop-blur-md md:px-6">
+        <header className="relative sticky top-0 z-10 flex h-20 shrink-0 items-center gap-3 border-b border-[var(--stroke)] bg-white/90 px-4 backdrop-blur-md md:h-24 md:px-6">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <SidebarTrigger className="rounded-xl md:hidden" />
             <Separator orientation="vertical" className="h-6 md:hidden" />
@@ -208,9 +208,9 @@ export function AppShell({
           </div>
           <Link
             href="/dashboard"
-            className="absolute left-1/2 hidden -translate-x-1/2 sm:block"
+            className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 sm:block"
           >
-            <BrandLogo size="xs" />
+            <BrandLogo size="dashboard" />
           </Link>
           <div className="ms-auto flex items-center gap-2">
             <QuickAddSheet />
@@ -231,7 +231,7 @@ export function AppShell({
             )}
           </div>
         </header>
-        <main className="flex min-h-[calc(100svh-4rem)] w-full flex-1 flex-col">{children}</main>
+        <main className="flex min-h-[calc(100svh-5rem)] w-full flex-1 flex-col md:min-h-[calc(100svh-6rem)]">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

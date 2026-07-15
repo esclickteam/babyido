@@ -2,19 +2,19 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface BrandLogoProps {
-  size?: "xs" | "sm" | "md" | "lg";
+  size?: "sidebar" | "dashboard" | "header" | "hero";
   className?: string;
   priority?: boolean;
 }
 
 const sizes = {
-  xs: "h-8",
-  sm: "h-10",
-  md: "h-14",
-  lg: "h-20",
+  sidebar: "h-12",
+  dashboard: "h-14 md:h-16",
+  header: "h-24 sm:h-28 md:h-32",
+  hero: "h-32 sm:h-36 md:h-40",
 };
 
-export function BrandLogo({ size = "md", className, priority }: BrandLogoProps) {
+export function BrandLogo({ size = "header", className, priority }: BrandLogoProps) {
   return (
     <Image
       src="/babyido-logo.png"
@@ -22,7 +22,11 @@ export function BrandLogo({ size = "md", className, priority }: BrandLogoProps) 
       width={1024}
       height={1024}
       priority={priority}
-      className={cn("w-auto object-contain", sizes[size], className)}
+      className={cn(
+        "w-auto object-contain drop-shadow-[0_8px_24px_rgba(47,143,91,0.18)]",
+        sizes[size],
+        className
+      )}
     />
   );
 }
