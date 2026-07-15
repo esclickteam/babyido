@@ -1,7 +1,7 @@
 "use client";
 
 import { Maximize2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CartesianGrid,
@@ -22,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import {
   buildPercentileCurves,
   type GrowthMetric,
@@ -38,6 +39,15 @@ const CURVE_COLORS: Record<string, string> = {
 
 const CHART_PERCENTILES = [3, 15, 50, 85, 97] as const;
 const CURVE_KEYS = ["p97", "p85", "p50", "p15", "p3"] as const;
+
+const LABEL_SLOTS = [
+  { dx: 0, dy: -34 },
+  { dx: 54, dy: -8 },
+  { dx: -54, dy: -8 },
+  { dx: 0, dy: 30 },
+  { dx: 60, dy: -32 },
+  { dx: -60, dy: -32 },
+] as const;
 
 interface GrowthChartProps {
   metric: GrowthMetric;
@@ -75,23 +85,74 @@ interface ChartBodyProps {
   expanded?: boolean;
 }
 
+function computeLabelPlacements(points: MeasurementPlotPoint[]) {
+  const sorted = [...points].sort((a, b) => a.month - b.month);
+  const placements = new Map<string, { dx: number; dy: number }>();
+
+  for (let i = 0; i < sorted.length; i++) {
+    const point = sorted[i];
+    const nearby = sorted.filter((p, j) => j < i && Math.abs(p.month - point.month) < 0.8).length;
+    placements.set(point.id, LABEL_SLOTS[nearby % LABEL_SLOTS.length]);
+  }
+
+  return placements;
+}
+
 function MeasurementDot({
   cx = 0,
   cy = 0,
   percentile,
-  offset = 0,
+  placement,
   expanded,
-}: DotProps & { percentile: number; offset?: number; expanded?: boolean }) {
+  active,
+  showLabel,
+  onActivate,
+}: DotProps & {
+  percentile: number;
+  placement: { dx: number; dy: number };
+  expanded?: boolean;
+  active?: boolean;
+  showLabel?: boolean;
+  onActivate?: () => void;
+}) {
   const r = expanded ? 7 : 5;
-  const labelY = cy - 26 - offset;
+  const labelX = cx + placement.dx;
+  const labelY = cy + placement.dy;
 
   return (
-    <g>
-      <circle cx={cx} cy={cy} r={r} fill="#0f172a" stroke="#fff" strokeWidth={2} />
-      <rect x={cx - 40} y={labelY - 12} width={80} height={22} rx={6} fill="#2563eb" />
-      <text x={cx} y={labelY + 3} textAnchor="middle" fill="#fff" fontSize={10} fontWeight={700}>
-        אחוזון {percentile.toFixed(1)}
-      </text>
+    <g
+      onMouseEnter={onActivate}
+      onFocus={onActivate}
+      onClick={onActivate}
+      style={{ cursor: "pointer" }}
+    >
+      {showLabel && (
+        <line
+          x1={cx}
+          y1={cy}
+          x2={labelX}
+          y2={labelY + (placement.dy < 0 ? 8 : -8)}
+          stroke="#93c5fd"
+          strokeWidth={1}
+          strokeDasharray="3 3"
+        />
+      )}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={active ? r + 2 : r}
+        fill={active ? "#1d4ed8" : "#0f172a"}
+        stroke="#fff"
+        strokeWidth={2}
+      />
+      {showLabel && (
+        <>
+          <rect x={labelX - 40} y={labelY - 12} width={80} height={22} rx={6} fill="#2563eb" />
+          <text x={labelX} y={labelY + 3} textAnchor="middle" fill="#fff" fontSize={10} fontWeight={700}>
+            אחוזון {percentile.toFixed(1)}
+          </text>
+        </>
+      )}
     </g>
   );
 }
@@ -107,6 +168,22 @@ function ChartBody({ metric, gender, points, expanded }: ChartBodyProps) {
     () => points.filter((p) => p.percentile != null && isFinite(p.month) && isFinite(p.value)),
     [points]
   );
+
+  const labelPlacements = useMemo(() => computeLabelPlacements(scatterData), [scatterData]);
+
+  const latestPointId = useMemo(() => {
+    const sorted = [...scatterData].sort((a, b) => b.month - a.month);
+    return sorted[0]?.id ?? null;
+  }, [scatterData]);
+
+  const [activePointId, setActivePointId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setActivePointId(latestPointId);
+  }, [latestPointId, metric]);
+
+  const showSingleLabel = scatterData.length === 1;
+  const resolvedActiveId = activePointId ?? latestPointId;
 
   const { yDomain, yTicks } = useMemo(() => {
     const values = [
@@ -134,8 +211,8 @@ function ChartBody({ metric, gender, points, expanded }: ChartBodyProps) {
 
   const chartHeight = expanded ? "min(40vh, 360px)" : "300px";
   const margin = expanded
-    ? { top: 36, right: 36, left: 4, bottom: 16 }
-    : { top: 32, right: 28, left: 4, bottom: 12 };
+    ? { top: 40, right: 40, left: 4, bottom: 16 }
+    : { top: 36, right: 32, left: 4, bottom: 12 };
 
   const curveEnd = curves[curves.length - 1];
 
@@ -178,10 +255,6 @@ function ChartBody({ metric, gender, points, expanded }: ChartBodyProps) {
                 fontSize: expanded ? 12 : 11,
                 dx: expanded ? 12 : 8,
               }}
-            />
-            <Tooltip
-              content={<CustomTooltip unit={unit} />}
-              cursor={{ strokeDasharray: "3 3" }}
             />
             <Line
               type="monotone"
@@ -228,25 +301,34 @@ function ChartBody({ metric, gender, points, expanded }: ChartBodyProps) {
               strokeWidth={1.5}
               isAnimationActive={false}
             />
-            {scatterData.map((point, index) => (
-              <ReferenceDot
-                key={point.id}
-                x={point.month}
-                y={point.value}
-                r={0}
-                fill="transparent"
-                stroke="none"
-                ifOverflow="visible"
-                shape={(props) => (
-                  <MeasurementDot
-                    {...props}
-                    percentile={point.percentile!}
-                    offset={(index % 3) * 14}
-                    expanded={expanded}
-                  />
-                )}
-              />
-            ))}
+            {scatterData.map((point) => {
+              const placement = labelPlacements.get(point.id) ?? LABEL_SLOTS[0];
+              const isActive = resolvedActiveId === point.id;
+              const showLabel = showSingleLabel || isActive;
+
+              return (
+                <ReferenceDot
+                  key={point.id}
+                  x={point.month}
+                  y={point.value}
+                  r={0}
+                  fill="transparent"
+                  stroke="none"
+                  ifOverflow="visible"
+                  shape={(props) => (
+                    <MeasurementDot
+                      {...props}
+                      percentile={point.percentile!}
+                      placement={placement}
+                      expanded={expanded}
+                      active={isActive}
+                      showLabel={showLabel}
+                      onActivate={() => setActivePointId(point.id)}
+                    />
+                  )}
+                />
+              );
+            })}
             {curveEnd &&
               CURVE_KEYS.map((key, index) => (
                 <ReferenceDot
@@ -270,6 +352,31 @@ function ChartBody({ metric, gender, points, expanded }: ChartBodyProps) {
           </ComposedChart>
         </ResponsiveContainer>
       </div>
+
+      {scatterData.length > 1 && (
+        <div className="space-y-2">
+          <p className="text-center text-[11px] text-muted-foreground">{t("chartPointHint")}</p>
+          <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {[...scatterData]
+              .sort((a, b) => b.month - a.month)
+              .map((point) => (
+                <button
+                  key={point.id}
+                  type="button"
+                  onClick={() => setActivePointId(point.id)}
+                  className={cn(
+                    "shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+                    resolvedActiveId === point.id
+                      ? "border-blue-600 bg-blue-600 text-white shadow-sm"
+                      : "border-[var(--stroke)] bg-white/90 text-[var(--ink)] hover:border-blue-300"
+                  )}
+                >
+                  {point.dateLabel} · {t("percentile")} {point.percentile?.toFixed(1)}
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap justify-center gap-3 text-[10px] text-muted-foreground sm:text-xs">
         {CHART_PERCENTILES.map((p) => (
