@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
+import { SITE_URL } from "@/lib/site-url";
 import "../globals.css";
 
 const fredoka = Fredoka({
@@ -21,7 +22,7 @@ const heebo = Heebo({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://babyido.com"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "BabyIdo — הכל שהתינוק שלכם צריך, במקום אחד.",
     template: "%s | BabyIdo",
