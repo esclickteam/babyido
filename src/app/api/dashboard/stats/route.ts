@@ -11,11 +11,13 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const babyId = searchParams.get("babyId");
+    const dateStr = searchParams.get("date");
+
     if (!babyId) {
       return NextResponse.json({ error: "babyId required" }, { status: 400 });
     }
 
-    const stats = await getDashboardStats(babyId, session.user.id);
+    const stats = await getDashboardStats(babyId, session.user.id, dateStr ?? undefined);
     if (!stats) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }

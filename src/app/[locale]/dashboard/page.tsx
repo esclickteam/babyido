@@ -3,6 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import { auth } from "@/lib/auth/config";
 import { BABY_COOKIE } from "@/lib/baby-selection.server";
 import { getDashboardStats } from "@/lib/data/dashboard-stats";
+import { getTodayIsrael } from "@/utils/date";
 import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { LegalDisclaimer } from "@/components/shared/legal-disclaimer";
 import { PageContainer } from "@/components/shared/page-container";
@@ -23,7 +24,7 @@ export default async function DashboardPage({
     const cookieStore = await cookies();
     selectedBabyId = cookieStore.get(BABY_COOKIE)?.value ?? null;
     if (selectedBabyId) {
-      initialStats = await getDashboardStats(selectedBabyId, session.user.id);
+      initialStats = await getDashboardStats(selectedBabyId, session.user.id, getTodayIsrael());
     }
   }
 

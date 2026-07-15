@@ -1,4 +1,5 @@
 import type { Baby, DashboardStats } from "@/types";
+import { getTodayLocal } from "@/utils/date";
 
 export async function fetchBabies(): Promise<Baby[]> {
   const res = await fetch("/api/babies");
@@ -41,7 +42,8 @@ export async function deleteBaby(id: string): Promise<void> {
 }
 
 export async function fetchDashboardStats(babyId: string): Promise<DashboardStats> {
-  const res = await fetch(`/api/dashboard/stats?babyId=${babyId}`);
+  const params = new URLSearchParams({ babyId, date: getTodayLocal() });
+  const res = await fetch(`/api/dashboard/stats?${params}`);
   if (!res.ok) throw new Error("Failed to fetch stats");
   return res.json();
 }

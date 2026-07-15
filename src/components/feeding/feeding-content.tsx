@@ -12,7 +12,7 @@ import {
   useFeedingSummary,
 } from "@/hooks/use-feeding";
 import { useBabyStore } from "@/stores/baby-store";
-import { formatDate, formatDateTime, combineLocalDateTime, getNowLocalTime, getTodayLocal } from "@/utils/date";
+import { formatDate, formatFeedingDateTime, getNowLocalTime, getTodayLocal } from "@/utils/date";
 import type { Locale } from "@/types";
 import { IdoButton } from "@/components/idoland/ido-button";
 import { IdoPanel } from "@/components/idoland/ido-panel";
@@ -97,13 +97,12 @@ export function FeedingContent() {
       toast.error(t("amountRequired"));
       return;
     }
-    const dateTime = combineLocalDateTime(selectedDate, time);
-
     try {
       await createEntry.mutateAsync({
         babyId: baby._id,
         type,
-        time: dateTime.toISOString(),
+        date: selectedDate,
+        time,
         amount: amountNum,
         notes: notes || undefined,
       });
@@ -288,7 +287,7 @@ export function FeedingContent() {
                     {t(entry.type)} · {entry.amount} {tc("ml")}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {formatDateTime(entry.time, locale)} · {t("remainingAfter", { amount: remainingAfter })}
+                    {formatFeedingDateTime(entry.time, locale)} · {t("remainingAfter", { amount: remainingAfter })}
                   </p>
                 </div>
                 <button

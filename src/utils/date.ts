@@ -102,11 +102,72 @@ export function getNowLocalTime(): string {
   return format(new Date(), "HH:mm");
 }
 
+/** yyyy-MM-dd in Asia/Jerusalem (for server-side feeding day boundaries) */
+export function getTodayIsrael(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(
+    new Date()
+  );
+}
+
+/** Parse HH:mm or h:mm AM/PM */
+export function parseTimeInput(timeStr: string): { hours: number; minutes: number } | null {
+  const trimmed = timeStr.trim().toUpperCase();
+  const m24 = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+  if (m24) {
+    const hours = Number(m24[1]);
+    const minutes = Number(m24[2]);
+    if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
+      return { hours, minutes };
+    }
+  }
+  const m12 = trimmed.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/);
+  if (m12) {
+    let hours = Number(m12[1]) % 12;
+    if (m12[3] === "PM") hours += 12;
+    const minutes = Number(m12[2]);
+    if (minutes >= 0 && minutes < 60) return { hours, minutes };
+  }
+  return null;
+}
+
+/** Store feeding datetime as wall-clock UTC (date + time the user entered) */
+export function feedingDateTimeToMongo(dateStr: string, timeStr: string): Date {
+  const normalized = dateStr.split("T")[0];
+  const [y, m, d] = normalized.split("-").map(Number);
+  const parsed = parseTimeInput(timeStr);
+  if (!parsed) throw new Error("Invalid time");
+  return new Date(Date.UTC(y, m - 1, d, parsed.hours, parsed.minutes, 0));
+}
+
+/** Day range for feeding queries (wall-clock UTC boundaries) */
+export function getFeedingDayRange(dateStr: string): { start: Date; end: Date } {
+  const normalized = dateStr.split("T")[0];
+  const [y, m, d] = normalized.split("-").map(Number);
+  return {
+    start: new Date(Date.UTC(y, m - 1, d, 0, 0, 0)),
+    end: new Date(Date.UTC(y, m - 1, d, 23, 59, 59, 999)),
+  };
+}
+
+/** Format feeding time stored as wall-clock UTC */
+export function formatFeedingDateTime(date: Date | string, locale: Locale = "he"): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const datePart = format(
+    new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())),
+    HE_DATE_PATTERN,
+    { locale: getDateLocale(locale) }
+  );
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const min = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${datePart} · ${hh}:${min}`;
+}
+
 /** Build local Date from yyyy-MM-dd + HH:mm */
 export function combineLocalDateTime(dateStr: string, timeStr: string): Date {
+  const parsed = parseTimeInput(timeStr);
+  if (!parsed) throw new Error("Invalid time");
   const [y, m, d] = dateStr.split("-").map(Number);
-  const [h, min] = timeStr.split(":").map(Number);
-  return new Date(y, m - 1, d, h, min, 0, 0);
+  return new Date(y, m - 1, d, parsed.hours, parsed.minutes, 0);
 }
 
 export function formatRelative(date: Date | string, locale: Locale) {

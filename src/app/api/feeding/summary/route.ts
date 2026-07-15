@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { startOfDay, endOfDay } from "date-fns";
 import { auth } from "@/lib/auth/config";
 import { getOwnedBaby } from "@/lib/api/baby-access";
 import { connectDB } from "@/lib/db/mongodb";
 import { calculateDailyFormulaAmount } from "@/utils/age";
+import { getFeedingDayRange, getTodayIsrael } from "@/utils/date";
 import { Baby, FeedingEntry, GrowthMeasurement } from "@/models";
 
 export async function GET(request: Request) {
@@ -27,9 +27,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const day = dateStr ? new Date(dateStr) : new Date();
-    const dayStart = startOfDay(day);
-    const dayEnd = endOfDay(day);
+    const dayKey = dateStr ?? getTodayIsrael();
+    const { start: dayStart, end: dayEnd } = getFeedingDayRange(dayKey);
 
     await connectDB();
 

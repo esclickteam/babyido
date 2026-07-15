@@ -4,6 +4,7 @@ import { getOwnedBaby } from "@/lib/api/baby-access";
 import { connectDB } from "@/lib/db/mongodb";
 import { feedingEntrySchema } from "@/lib/validations/modules";
 import { FeedingEntry } from "@/models/FeedingEntry";
+import { feedingDateTimeToMongo } from "@/utils/date";
 
 export async function GET(request: Request) {
   try {
@@ -58,11 +59,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    let storedTime: Date;
+    try {
+      storedTime = feedingDateTimeToMongo(parsed.data.date, parsed.data.time);
+    } catch {
+      return NextResponse.json({ error: "Invalid date or time" }, { status: 400 });
+    }
+
     await connectDB();
     const entry = await FeedingEntry.create({
       babyId: parsed.data.babyId,
       type: parsed.data.type,
-      time: new Date(parsed.data.time),
+      time: storedTime,
       amount: parsed.data.amount,
       formulaBrand: parsed.data.formulaBrand,
       notes: parsed.data.notes,
@@ -81,7 +89,8 @@ export async function POST(request: Request) {
       },
       { status: 201 }
     );
-  } catch {
+  } catch (err) {
+    console.error("feeding entry create error", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

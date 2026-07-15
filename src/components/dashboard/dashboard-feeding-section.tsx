@@ -11,8 +11,7 @@ import {
   useFeedingSummary,
 } from "@/hooks/use-feeding";
 import {
-  combineLocalDateTime,
-  formatDateTime,
+  formatFeedingDateTime,
   getNowLocalTime,
   getTodayLocal,
 } from "@/utils/date";
@@ -69,7 +68,8 @@ export function DashboardFeedingSection({ babyId }: DashboardFeedingSectionProps
       await createEntry.mutateAsync({
         babyId,
         type,
-        time: combineLocalDateTime(today, time).toISOString(),
+        date: today,
+        time,
         amount: amountNum,
       });
       toast.success(t("mealSaved"));
@@ -202,7 +202,7 @@ export function DashboardFeedingSection({ babyId }: DashboardFeedingSectionProps
                       {entry.amount} {tc("ml")} · {t(entry.type)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDateTime(entry.time, locale)}
+                      {formatFeedingDateTime(entry.time, locale)}
                     </p>
                   </div>
                   <button

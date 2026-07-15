@@ -4,6 +4,7 @@ import { FEEDING_TYPES } from "@/constants/feeding";
 export const feedingEntrySchema = z.object({
   babyId: z.string().min(1),
   type: z.enum(FEEDING_TYPES),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().min(1),
   amount: z.number().min(0).optional(),
   formulaBrand: z.string().max(100).optional(),

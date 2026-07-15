@@ -1,12 +1,14 @@
 import { endOfDay, startOfDay } from "date-fns";
 import { connectDB } from "@/lib/db/mongodb";
 import { calculateDailyFormulaAmount } from "@/utils/age";
+import { getFeedingDayRange, getTodayIsrael } from "@/utils/date";
 import { Baby, FeedingEntry, GrowthMeasurement, Milestone, SleepEntry, TastingEntry } from "@/models";
 import type { DashboardStats } from "@/types";
 
 export async function getDashboardStats(
   babyId: string,
-  userId: string
+  userId: string,
+  dateStr?: string
 ): Promise<DashboardStats | null> {
   await connectDB();
 
@@ -16,13 +18,16 @@ export async function getDashboardStats(
   const now = new Date();
   const dayStart = startOfDay(now);
   const dayEnd = endOfDay(now);
+  const { start: feedingDayStart, end: feedingDayEnd } = getFeedingDayRange(
+    dateStr ?? getTodayIsrael()
+  );
 
   const [lastGrowth, todayFeedings, todaySleep, lastMilestone, lastTasting] = await Promise.all([
     GrowthMeasurement.findOne({ babyId })
       .sort({ date: -1 })
       .select("weight height headCircumference")
       .lean(),
-    FeedingEntry.find({ babyId, time: { $gte: dayStart, $lte: dayEnd } })
+    FeedingEntry.find({ babyId, time: { $gte: feedingDayStart, $lte: feedingDayEnd } })
       .select("amount")
       .lean(),
     SleepEntry.find({

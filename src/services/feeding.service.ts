@@ -28,7 +28,10 @@ export async function createFeedingEntry(data: Record<string, unknown>): Promise
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create feeding entry");
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error ?? "Failed to create feeding entry");
+  }
   return res.json();
 }
 
