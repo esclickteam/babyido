@@ -1,5 +1,7 @@
 "use client";
 
+import { Calculator, Plus, Trash2, Utensils } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
