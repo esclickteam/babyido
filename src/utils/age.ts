@@ -1,4 +1,4 @@
-import { differenceInDays, differenceInMonths } from "date-fns";
+import { addMonths, differenceInDays, differenceInMonths } from "date-fns";
 import type { Locale } from "@/types";
 
 /** Parse birth date as local calendar date (avoids UTC timezone shifts). */
@@ -14,61 +14,92 @@ export function parseBirthDate(birthDate: Date | string): Date {
   return new Date(birthDate);
 }
 
+export interface BabyAgeParts {
+  months: number;
+  weeks: number;
+  days: number;
+}
+
 /**
- * Calendar-month age: born on the 18th → turns a new month on each 18th.
+ * Calendar age: full months since birth day-of-month, then weeks + days
+ * from the last monthiversary.
+ * e.g. born 18.3, today 16.7 → 3 months + 4 weeks (from 18.6 to 16.7).
+ */
+export function getBabyAgeParts(
+  birthDate: Date | string,
+  referenceDate: Date = new Date()
+): BabyAgeParts {
+  const birth = parseBirthDate(birthDate);
+  const months = differenceInMonths(referenceDate, birth);
+  const monthAnchor = addMonths(birth, months);
+  const remainingDays = Math.max(0, differenceInDays(referenceDate, monthAnchor));
+  return {
+    months,
+    weeks: Math.floor(remainingDays / 7),
+    days: remainingDays % 7,
+  };
+}
+
+/**
+ * Calendar-month count for eligibility checks (tastings etc.).
  * e.g. 18.3 → 18.7 = 4 months.
  */
 export function getBabyAgeInMonths(
   birthDate: Date | string,
   referenceDate: Date = new Date()
 ): number {
-  return differenceInMonths(referenceDate, parseBirthDate(birthDate));
+  return getBabyAgeParts(birthDate, referenceDate).months;
+}
+
+function joinAgeParts(parts: string[], locale: Locale): string {
+  if (parts.length === 0) return locale === "he" ? "נולד/ה היום" : "born today";
+  if (parts.length === 1) return parts[0];
+  if (parts.length === 2) {
+    return locale === "he" ? `${parts[0]} ו-${parts[1]}` : `${parts[0]} and ${parts[1]}`;
+  }
+  const last = parts[parts.length - 1];
+  const rest = parts.slice(0, -1).join(locale === "he" ? ", " : ", ");
+  return locale === "he" ? `${rest} ו-${last}` : `${rest}, and ${last}`;
+}
+
+function formatAgeParts({ months, weeks, days }: BabyAgeParts, locale: Locale): string {
+  if (locale === "he") {
+    const parts: string[] = [];
+
+    if (months >= 1) {
+      if (months === 1) parts.push("חודש אחד");
+      else if (months === 2) parts.push("חודשיים");
+      else parts.push(`${months} חודשים`);
+    }
+
+    if (weeks >= 1) {
+      if (weeks === 1) parts.push("שבוע אחד");
+      else if (weeks === 2) parts.push("שבועיים");
+      else parts.push(`${weeks} שבועות`);
+    }
+
+    if (days >= 1) {
+      if (days === 1) parts.push("יום אחד");
+      else if (days === 2) parts.push("יומיים");
+      else parts.push(`${days} ימים`);
+    }
+
+    if (parts.length === 0) {
+      return months === 0 && weeks === 0 && days === 0 ? "נולד/ה היום" : "פחות מיום";
+    }
+
+    return joinAgeParts(parts, locale);
+  }
+
+  const parts: string[] = [];
+  if (months >= 1) parts.push(`${months} month${months > 1 ? "s" : ""}`);
+  if (weeks >= 1) parts.push(`${weeks} week${weeks > 1 ? "s" : ""}`);
+  if (days >= 1) parts.push(`${days} day${days > 1 ? "s" : ""}`);
+  return joinAgeParts(parts, locale);
 }
 
 export function getExactAge(birthDate: Date | string, locale: Locale): string {
-  const birth = parseBirthDate(birthDate);
-  const now = new Date();
-  const months = getBabyAgeInMonths(birth, now);
-
-  if (locale === "he") {
-    if (months >= 1) {
-      if (months === 1) return "חודש אחד";
-      if (months === 2) return "חודשיים";
-      return `${months} חודשים`;
-    }
-
-    const totalDays = differenceInDays(now, birth);
-    const weeks = Math.floor(totalDays / 7);
-    const days = totalDays % 7;
-
-    if (weeks >= 1) {
-      const weekLabel = weeks === 1 ? "שבוע אחד" : weeks === 2 ? "שבועיים" : `${weeks} שבועות`;
-      if (days === 0) return weekLabel;
-      const dayLabel = days === 1 ? "יום אחד" : days === 2 ? "יומיים" : `${days} ימים`;
-      return `${weekLabel} ו-${dayLabel}`;
-    }
-
-    if (totalDays <= 0) return "נולד/ה היום";
-    if (totalDays === 1) return "יום אחד";
-    if (totalDays === 2) return "יומיים";
-    return `${totalDays} ימים`;
-  }
-
-  if (months >= 1) {
-    return `${months} month${months > 1 ? "s" : ""}`;
-  }
-
-  const totalDays = differenceInDays(now, birth);
-  const weeks = Math.floor(totalDays / 7);
-  const days = totalDays % 7;
-
-  if (weeks >= 1) {
-    if (days === 0) return `${weeks} week${weeks > 1 ? "s" : ""}`;
-    return `${weeks} week${weeks > 1 ? "s" : ""}, ${days} day${days > 1 ? "s" : ""}`;
-  }
-
-  if (totalDays <= 0) return "born today";
-  return `${totalDays} day${totalDays > 1 ? "s" : ""}`;
+  return formatAgeParts(getBabyAgeParts(birthDate), locale);
 }
 
 export function minutesToHoursMinutes(minutes: number, locale: Locale): string {

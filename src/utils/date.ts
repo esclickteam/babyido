@@ -5,6 +5,7 @@ import type { Locale } from "@/types";
 export {
   calculateDailyFormulaAmount,
   getBabyAgeInMonths,
+  getBabyAgeParts,
   getExactAge,
   minutesToHoursMinutes,
   parseBirthDate,
