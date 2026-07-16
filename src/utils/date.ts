@@ -139,6 +139,35 @@ export function feedingDateTimeToMongo(dateStr: string, timeStr: string): Date {
   return new Date(Date.UTC(y, m - 1, d, parsed.hours, parsed.minutes, 0));
 }
 
+/**
+ * Elapsed ms between a wall-clock UTC stored instant and now.
+ * Matches feedingDateTimeToMongo — compares local "now" to UTC field components of start.
+ */
+export function getWallClockElapsedMs(startTime: string, nowMs = Date.now()): number {
+  const start = new Date(startTime);
+  const now = new Date(nowMs);
+
+  const startEpoch = Date.UTC(
+    start.getUTCFullYear(),
+    start.getUTCMonth(),
+    start.getUTCDate(),
+    start.getUTCHours(),
+    start.getUTCMinutes(),
+    start.getUTCSeconds()
+  );
+
+  const nowEpoch = Date.UTC(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    now.getHours(),
+    now.getMinutes(),
+    now.getSeconds()
+  );
+
+  return Math.max(0, nowEpoch - startEpoch);
+}
+
 /** Day range for feeding queries (wall-clock UTC boundaries) */
 export function getFeedingDayRange(dateStr: string): { start: Date; end: Date } {
   const normalized = dateStr.split("T")[0];

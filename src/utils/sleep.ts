@@ -1,5 +1,5 @@
 import type { SleepEntry } from "@/types";
-import { feedingEntryDateKey } from "@/utils/date";
+import { feedingEntryDateKey, getWallClockElapsedMs } from "@/utils/date";
 
 export function sleepDurationMinutes(entry: Pick<SleepEntry, "startTime" | "endTime">): number {
   if (!entry.endTime) return 0;
@@ -9,7 +9,7 @@ export function sleepDurationMinutes(entry: Pick<SleepEntry, "startTime" | "endT
 }
 
 export function getElapsedMs(startTime: string, now = Date.now()): number {
-  return Math.max(0, now - new Date(startTime).getTime());
+  return getWallClockElapsedMs(startTime, now);
 }
 
 /** Live timer display — always H:MM:SS */
