@@ -41,7 +41,7 @@ export async function syncVaccinationNotification({
         scheduledAt: record.scheduledDate,
         scheduledTime: record.scheduledTime,
         read: false,
-        href: "/dashboard/journal",
+        href: "/dashboard/vaccinations",
       },
       $unset: { emailSentAt: 1 },
     },

@@ -144,19 +144,6 @@ export const milestoneRecordSchema = z.object({
   completed: z.boolean().optional(),
 });
 
-export const wellBabyVisitSchema = z.object({
-  babyId: z.string().min(1),
-  scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  scheduledTime: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
-  clinicName: z.string().max(200).optional(),
-  notes: z.string().max(2000).optional(),
-  completed: z.boolean().optional(),
-  completedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-  reminderEnabled: z.boolean().optional(),
-});
-
-export type WellBabyVisitInput = z.infer<typeof wellBabyVisitSchema>;
-
 export const numberField = {
   setValueAs: (value: string) => (value === "" ? undefined : Number(value)),
 };

@@ -1,30 +1,37 @@
 "use client";
 
-import { endOfMonth, startOfMonth } from "date-fns";
-import { Baby, BookOpen, Stethoscope, Syringe } from "lucide-react";
+import { Baby, Ruler, Moon, Sparkles, Syringe, Stethoscope } from "lucide-react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { LinkButton } from "@/components/shared/link-button";
 import { GlassCard } from "@/components/shared/glass-card";
+import { StatCard } from "@/components/shared/stat-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useBabyStore } from "@/stores/baby-store";
-import { useCalendarEvents } from "@/hooks/use-calendar";
-import { getExactAge } from "@/utils/age";
-import { formatShortDate, toDateOnlyString } from "@/utils/date";
-import type { Locale } from "@/types";
-import { Link } from "@/i18n/navigation";
+import { useDashboardStats } from "@/hooks/use-babies";
+import { getExactAge, minutesToHoursMinutes } from "@/utils/age";
+import { formatShortDate } from "@/utils/date";
+import type { DashboardStats, Locale } from "@/types";
+import { DashboardFeedingSection } from "@/components/dashboard/dashboard-feeding-section";
+import { DashboardSleepSection } from "@/components/dashboard/dashboard-sleep-section";
+import { DashboardTummyTimeSection } from "@/components/dashboard/dashboard-tummy-time-section";
 
-export function DashboardContent() {
+interface DashboardContentProps {
+  initialStats?: DashboardStats | null;
+  selectedBabyId?: string | null;
+}
+
+export function DashboardContent({ initialStats, selectedBabyId }: DashboardContentProps) {
   const t = useTranslations("dashboard");
-  const tj = useTranslations("journal");
   const tc = useTranslations("common");
   const locale = useLocale() as Locale;
-  const baby = useBabyStore((s) => s.getSelectedBaby());
-
-  const today = new Date();
-  const from = toDateOnlyString(startOfMonth(today));
-  const to = toDateOnlyString(endOfMonth(today));
-  const { data: events = [] } = useCalendarEvents(baby?._id ?? null, from, to);
-  const upcoming = events.filter((e) => !e.completed).slice(0, 3);
+  const storeBaby = useBabyStore((s) => s.getSelectedBaby());
+  const baby = storeBaby;
+  const { data: stats, isLoading, isFetching } = useDashboardStats(
+    baby?._id ?? selectedBabyId ?? null,
+    initialStats ?? undefined
+  );
+  const showStatsSkeleton = isLoading && !stats;
 
   if (!baby) {
     return (
@@ -43,10 +50,11 @@ export function DashboardContent() {
     );
   }
 
-  const todayLabel = formatShortDate(today, locale);
+  const remaining = stats ? Math.max(0, stats.dailyFeedingGoal - stats.todayFeedingAmount) : 0;
+  const todayLabel = formatShortDate(new Date(), locale);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="space-y-6">
       <GlassCard className="overflow-hidden p-0">
         <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:gap-6 sm:p-6">
           <div className="relative size-24 shrink-0 overflow-hidden rounded-3xl bg-muted sm:size-28">
@@ -77,56 +85,81 @@ export function DashboardContent() {
         </div>
       </GlassCard>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Link
-          href="/dashboard/journal"
-          className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-gradient-to-l from-emerald-50 to-white p-4 shadow-sm transition hover:shadow-md"
-        >
-          <BookOpen className="size-8 text-emerald-600" />
-          <div>
-            <p className="font-bold text-[var(--grass-deep)]">{tj("title")}</p>
-            <p className="text-xs text-muted-foreground">{tj("subtitle")}</p>
-          </div>
-        </Link>
-        <Link
-          href="/dashboard/well-baby"
-          className="flex items-center gap-3 rounded-2xl border border-violet-200 bg-gradient-to-l from-violet-50 to-white p-4 shadow-sm transition hover:shadow-md"
-        >
-          <Stethoscope className="size-8 text-violet-600" />
-          <div>
-            <p className="font-bold text-[var(--grass-deep)]">{t("wellBabyCard")}</p>
-            <p className="text-xs text-muted-foreground">{t("wellBabyCardHint")}</p>
-          </div>
-        </Link>
-      </div>
+      <DashboardFeedingSection babyId={baby._id} />
 
-      {upcoming.length > 0 && (
-        <GlassCard className="space-y-3 p-4">
-          <h2 className="font-[family-name:var(--font-display)] text-base font-bold text-[var(--grass-deep)]">
-            {tj("upcoming")}
-          </h2>
-          <ul className="space-y-2">
-            {upcoming.map((event) => (
-              <li
-                key={event.id}
-                className="flex items-center gap-2 rounded-xl border border-[var(--stroke)]/60 bg-white/80 px-3 py-2 text-sm"
-              >
-                {event.type === "vaccination" ? (
-                  <Syringe className="size-4 shrink-0 text-sky-600" />
-                ) : (
-                  <Stethoscope className="size-4 shrink-0 text-violet-600" />
-                )}
-                <span className="min-w-0 flex-1 truncate font-semibold">{event.title}</span>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {formatShortDate(event.date, locale)}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <Link href="/dashboard/journal" className="text-sm font-semibold text-[var(--coral)] hover:underline">
-            {tj("openCalendar")}
-          </Link>
-        </GlassCard>
+      <DashboardSleepSection babyId={baby._id} />
+
+      <DashboardTummyTimeSection babyId={baby._id} />
+
+      {showStatsSkeleton ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-2xl" />
+          ))}
+        </div>
+      ) : (
+        <div
+          className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-4 ${isFetching ? "opacity-80" : ""}`}
+        >
+          <StatCard
+            label={t("lastWeight")}
+            value={stats?.lastWeight ? `${stats.lastWeight} ${tc("grams")}` : "—"}
+            icon={<Ruler className="size-4" />}
+          />
+          <StatCard
+            label={t("lastHeight")}
+            value={stats?.lastHeight ? `${stats.lastHeight} ${tc("cm")}` : "—"}
+            icon={<Ruler className="size-4" />}
+          />
+          <StatCard
+            label={t("headCircumference")}
+            value={stats?.lastHeadCircumference ? `${stats.lastHeadCircumference} ${tc("cm")}` : "—"}
+            icon={<Ruler className="size-4" />}
+          />
+          <StatCard
+            label={t("dailyGoal")}
+            value={`${stats?.dailyFeedingGoal ?? 0} ${tc("ml")}`}
+            subValue={`${t("remaining")}: ${remaining} ${tc("ml")}`}
+            icon={<Baby className="size-4" />}
+          />
+          <StatCard
+            label={t("todaySleep")}
+            value={minutesToHoursMinutes(stats?.todaySleepMinutes ?? 0, locale)}
+            icon={<Moon className="size-4" />}
+          />
+          <StatCard
+            label={t("lastMilestone")}
+            value={stats?.lastMilestone?.titleHe ?? "—"}
+            subValue={
+              stats?.lastMilestone?.date
+                ? formatShortDate(stats.lastMilestone.date, locale)
+                : undefined
+            }
+            icon={<Sparkles className="size-4" />}
+          />
+          <StatCard
+            label={t("todayTummyTime")}
+            value={minutesToHoursMinutes(stats?.todayTummyTimeMinutes ?? 0, locale)}
+            icon={<Baby className="size-4" />}
+          />
+          <StatCard
+            label={t("nextVaccination")}
+            value={
+              stats?.nextVaccination
+                ? stats.nextVaccination.nameHe
+                : "—"
+            }
+            subValue={
+              stats?.nextVaccination
+                ? stats.nextVaccination.scheduledDate
+                  ? formatShortDate(stats.nextVaccination.scheduledDate, locale)
+                  : `${t("recommended")}: ${formatShortDate(stats.nextVaccination.recommendedDate, locale)}`
+                : undefined
+            }
+            icon={<Syringe className="size-4" />}
+          />
+          <StatCard label={t("nextWellBaby")} value="—" icon={<Stethoscope className="size-4" />} />
+        </div>
       )}
     </div>
   );
