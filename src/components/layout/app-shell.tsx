@@ -182,7 +182,7 @@ function AppSidebar() {
         <Button
           variant="ghost"
           className="h-11 w-full justify-start gap-2 rounded-xl font-semibold group-data-[collapsible=icon]:size-11 group-data-[collapsible=icon]:p-0"
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={() => void signOut({ callbackUrl: "/", redirect: true })}
         >
           <LogOut className="size-4" />
           <span className="group-data-[collapsible=icon]:hidden">{ta("logout")}</span>

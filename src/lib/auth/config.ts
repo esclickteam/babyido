@@ -10,6 +10,17 @@ import { User } from "@/models/User";
 /** One year — stay signed in until explicit logout. */
 const SESSION_MAX_AGE = 365 * 24 * 60 * 60;
 
+const isProduction = process.env.NODE_ENV === "production";
+
+/** Persistent HttpOnly cookie — cleared only via signOut (like invistimo authToken). */
+const authTokenCookieOptions = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  path: "/",
+  secure: isProduction,
+  maxAge: SESSION_MAX_AGE,
+};
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
@@ -55,13 +66,20 @@ if (isGoogleAuthEnabled()) {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
+  useSecureCookies: isProduction,
   session: {
     strategy: "jwt",
     maxAge: SESSION_MAX_AGE,
-    updateAge: 7 * 24 * 60 * 60,
+    updateAge: SESSION_MAX_AGE,
   },
   jwt: {
     maxAge: SESSION_MAX_AGE,
+  },
+  cookies: {
+    sessionToken: {
+      name: "authToken",
+      options: authTokenCookieOptions,
+    },
   },
   pages: {
     signIn: "/login",
@@ -91,6 +109,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, account }) {
       if (user?.id) {
         token.id = user.id;
+        token.sub = user.id;
       }
 
       if (account?.provider === "google" && token.email) {
