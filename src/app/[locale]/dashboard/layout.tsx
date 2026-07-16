@@ -1,6 +1,7 @@
 import { dehydrate, QueryClient } from "@tanstack/react-query";
 import { redirect } from "@/i18n/navigation";
 import { auth } from "@/lib/auth/config";
+import { getAuthUserId } from "@/lib/auth/session-user";
 import { getUserBabies } from "@/lib/data/babies";
 import { AppShell } from "@/components/layout/app-shell";
 import { BabyStoreInit } from "@/components/layout/baby-store-init";
@@ -15,12 +16,13 @@ export default async function DashboardLayout({
 }) {
   const { locale } = await params;
   const session = await auth();
+  const userId = getAuthUserId(session);
 
-  if (!session?.user?.id) {
+  if (!userId) {
     redirect({ href: "/login", locale: "he" });
   }
 
-  const babies = await getUserBabies(session!.user!.id);
+  const babies = await getUserBabies(userId!);
 
   const queryClient = new QueryClient({
     defaultOptions: {

@@ -115,18 +115,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account?.provider === "google" && token.email) {
         await connectDB();
         const dbUser = await User.findOne({ email: token.email });
-        if (dbUser) token.id = dbUser._id.toString();
+        if (dbUser) {
+          token.id = dbUser._id.toString();
+          token.sub = dbUser._id.toString();
+        }
+      }
+
+      if (!token.id && token.sub) {
+        token.id = String(token.sub);
       }
 
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        if (token.id) {
-          session.user.id = token.id as string;
-        }
-        if (token.sub && !session.user.id) {
-          session.user.id = token.sub;
+        const userId = token.id ?? token.sub;
+        if (userId) {
+          session.user.id = String(userId);
         }
       }
       return session;

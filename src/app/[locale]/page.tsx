@@ -4,7 +4,9 @@ import { IdoButton } from "@/components/idoland/ido-button";
 import { SkyDecor } from "@/components/idoland/sky-decor";
 import { BrandSymbol, BrandWordmark } from "@/components/shared/brand-logo";
 import { LegalDisclaimer } from "@/components/shared/legal-disclaimer";
-import { Link } from "@/i18n/navigation";
+import { redirect, Link } from "@/i18n/navigation";
+import { auth } from "@/lib/auth/config";
+import { getAuthUserId } from "@/lib/auth/session-user";
 
 export default async function LandingPage({
   params,
@@ -13,6 +15,12 @@ export default async function LandingPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+
+  const session = await auth();
+  if (getAuthUserId(session)) {
+    redirect({ href: "/dashboard", locale: locale as "he" });
+  }
+
   const t = await getTranslations("landing");
 
   const features = [

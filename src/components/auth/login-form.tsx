@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Link, useRouter } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { IdoButton } from "@/components/idoland/ido-button";
 import { IdoPanel } from "@/components/idoland/ido-panel";
@@ -27,7 +27,6 @@ interface LoginFormProps {
 export function LoginForm({ googleEnabled }: LoginFormProps) {
   const t = useTranslations("auth");
   const tc = useTranslations("common");
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -55,8 +54,7 @@ export function LoginForm({ googleEnabled }: LoginFormProps) {
       return;
     }
 
-    router.refresh();
-    router.push("/dashboard");
+    window.location.assign("/dashboard");
   }
 
   return (
