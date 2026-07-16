@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Square, Sun, Trash2 } from "lucide-react";
+import { Moon, Sun, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import {
   useSleepSummary,
   useStartSleep,
 } from "@/hooks/use-sleep";
+import { useLiveTimer } from "@/hooks/use-live-timer";
 import { minutesToHoursMinutes } from "@/utils/age";
 import {
   formatDateTime,
@@ -24,6 +25,7 @@ import {
   sleepDurationMinutes,
 } from "@/utils/sleep";
 import type { Locale } from "@/types";
+import { LiveTimerCircle } from "@/components/shared/live-timer-circle";
 import { IdoPanel } from "@/components/idoland/ido-panel";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,6 +40,7 @@ interface CompletedSummary {
   type: SleepType;
   endTime: string;
   durationMinutes: number;
+  durationLabel: string;
 }
 
 export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
@@ -48,7 +51,6 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
 
   const today = getTodayLocal();
   const [type, setType] = useState<SleepType>("nap");
-  const [timerTick, setTimerTick] = useState(0);
   const [completedSummary, setCompletedSummary] = useState<CompletedSummary | null>(null);
 
   const { data: summary, isLoading } = useSleepSummary(babyId, today);
@@ -58,16 +60,11 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
 
   const active = summary?.activeEntry;
   const isSleeping = !!active;
+  const timerLabel = useLiveTimer(isSleeping ? active?.startTime : null);
 
   useEffect(() => {
     if (active) setType(active.type);
   }, [active?.type, active?._id]);
-
-  useEffect(() => {
-    if (!active) return;
-    const id = setInterval(() => setTimerTick((n) => n + 1), 1000);
-    return () => clearInterval(id);
-  }, [active?._id]);
 
   async function handleTypeChange(nextType: SleepType) {
     setType(nextType);
@@ -83,6 +80,7 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
   async function handleTimerPress() {
     try {
       if (isSleeping && active) {
+        const durationAtStop = timerLabel;
         const ended = await patchSleep.mutateAsync({
           id: active._id,
           data: { date: today, time: getNowLocalTime() },
@@ -93,6 +91,7 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
             type: ended.type,
             endTime: ended.endTime,
             durationMinutes,
+            durationLabel: durationAtStop,
           });
         }
         toast.success(t("sleepEnded"));
@@ -112,15 +111,12 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
     }
   }
 
-  const elapsedLabel =
-    active && isSleeping ? formatElapsedTimer(active.startTime) : "00:00";
-  void timerTick;
+  const isNap = type === "nap";
+  const sleepTheme = isNap ? "amber" : "indigo";
 
   const completedLogs = [...(summary?.entries ?? [])]
     .filter((e) => e.endTime)
     .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
-
-  const isNap = type === "nap";
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(260px,320px)]">
@@ -204,55 +200,22 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
 
         {/* Running timer button */}
         <div className="flex flex-col items-center gap-3">
-          <button
-            type="button"
-            onClick={handleTimerPress}
+          <LiveTimerCircle
+            isActive={isSleeping}
+            timerLabel={timerLabel}
+            onPress={handleTimerPress}
             disabled={startSleep.isPending || patchSleep.isPending}
-            className={cn(
-              "relative flex size-40 flex-col items-center justify-center gap-2 rounded-full border-4 text-center transition-all active:scale-95 sm:size-44",
-              isSleeping
-                ? isNap
-                  ? "border-amber-400 bg-gradient-to-b from-amber-100 to-amber-50 shadow-lg shadow-amber-200/50"
-                  : "border-indigo-500 bg-gradient-to-b from-indigo-100 to-indigo-50 shadow-lg shadow-indigo-200/50"
-                : isNap
-                  ? "border-amber-300 bg-white hover:border-amber-400 hover:bg-amber-50"
-                  : "border-indigo-300 bg-white hover:border-indigo-400 hover:bg-indigo-50"
-            )}
-          >
-            {isSleeping && (
-              <span
-                className={cn(
-                  "absolute inset-0 animate-ping rounded-full opacity-20",
-                  isNap ? "bg-amber-400" : "bg-indigo-500"
-                )}
-              />
-            )}
-            {isSleeping ? (
-              <>
-                <Square className={cn("relative size-6", isNap ? "text-amber-700" : "text-indigo-700")} />
-                <span
-                  className={cn(
-                    "relative font-mono text-3xl font-bold tabular-nums tracking-tight sm:text-4xl",
-                    isNap ? "text-amber-900" : "text-indigo-900"
-                  )}
-                >
-                  {elapsedLabel}
-                </span>
-                <span className={cn("relative text-xs font-semibold", isNap ? "text-amber-700" : "text-indigo-700")}>
-                  {t("tapToStop")}
-                </span>
-              </>
-            ) : (
-              <>
-                {isNap ? (
-                  <Sun className="size-10 text-amber-500" />
-                ) : (
-                  <Moon className="size-10 text-indigo-500" />
-                )}
-                <span className="text-sm font-bold text-[var(--ink)]">{t("tapToStart")}</span>
-              </>
-            )}
-          </button>
+            idleIcon={
+              isNap ? (
+                <Sun className="size-10 text-amber-500" />
+              ) : (
+                <Moon className="size-10 text-indigo-500" />
+              )
+            }
+            tapToStartLabel={t("tapToStart")}
+            tapToStopLabel={t("tapToStop")}
+            theme={sleepTheme}
+          />
 
           {isSleeping && active && (
             <p className="text-sm text-muted-foreground">
@@ -273,10 +236,11 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
           >
             <p className="text-lg font-bold text-[var(--grass-deep)]">{t("sleepSummaryTitle")}</p>
             <p className="mt-2 text-sm font-semibold">{t(completedSummary.type)}</p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-[var(--ink)]">
-              {minutesToHoursMinutes(completedSummary.durationMinutes, locale)}
+            <p className="mt-1 font-mono text-3xl font-bold tabular-nums text-[var(--ink)]">
+              {completedSummary.durationLabel}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
+              {minutesToHoursMinutes(completedSummary.durationMinutes, locale)} ·{" "}
               {t("endedAt", { time: formatTimeFromIso(completedSummary.endTime) })}
             </p>
             <button

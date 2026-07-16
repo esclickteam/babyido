@@ -246,7 +246,12 @@
     "sessionStarted": "Tummy time started",
     "sessionEnded": "Tummy time ended",
     "sessionSummary": "Session summary",
-    "alreadyActive": "A session is already active"
+    "alreadyActive": "A session is already active",
+    "since": "Since",
+    "dismiss": "Dismiss",
+    "sessionsToday": "Today's sessions",
+    "whyTitle": "Why tummy time matters",
+    "whyBody": "Tummy time strengthens neck, shoulder and back muscles and prepares for crawling. A few short sessions while baby is alert and happy work best."
   },
   "notifications": {
     "title": "Notifications",

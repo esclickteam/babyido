@@ -12,6 +12,20 @@ export function getElapsedMs(startTime: string, now = Date.now()): number {
   return Math.max(0, now - new Date(startTime).getTime());
 }
 
+/** Live timer display — always H:MM:SS */
+export function formatElapsedTimerHms(startTime: string, now = Date.now()): string {
+  const totalSeconds = Math.floor(getElapsedMs(startTime, now) / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+export function parseElapsedHms(label: string): { hours: string; minutes: string; seconds: string } {
+  const [hours = "0", minutes = "00", seconds = "00"] = label.split(":");
+  return { hours, minutes, seconds };
+}
+
 /** Live timer display e.g. 05:32 or 1:05:32 */
 export function formatElapsedTimer(startTime: string, now = Date.now()): string {
   const totalSeconds = Math.floor(getElapsedMs(startTime, now) / 1000);
