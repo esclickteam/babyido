@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { FEEDING_TYPES } from "@/constants/feeding";
+import { SLEEP_TYPES } from "@/constants/sleep";
 
 export const feedingEntrySchema = z.object({
   babyId: z.string().min(1),
@@ -12,6 +13,33 @@ export const feedingEntrySchema = z.object({
 });
 
 export type FeedingEntryInput = z.infer<typeof feedingEntrySchema>;
+
+export const sleepStartSchema = z.object({
+  babyId: z.string().min(1),
+  type: z.enum(SLEEP_TYPES),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().min(1),
+  notes: z.string().max(500).optional(),
+});
+
+export const sleepEndSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().min(1),
+});
+
+export const sleepManualSchema = z.object({
+  babyId: z.string().min(1),
+  type: z.enum(SLEEP_TYPES),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  startTime: z.string().min(1),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  endTime: z.string().min(1),
+  notes: z.string().max(500).optional(),
+});
+
+export type SleepStartInput = z.infer<typeof sleepStartSchema>;
+export type SleepEndInput = z.infer<typeof sleepEndSchema>;
+export type SleepManualInput = z.infer<typeof sleepManualSchema>;
 
 export const growthMeasurementSchema = z.object({
   babyId: z.string().min(1),

@@ -1,7 +1,7 @@
-import { endOfDay, startOfDay } from "date-fns";
 import { connectDB } from "@/lib/db/mongodb";
 import { calculateDailyFormulaAmount } from "@/utils/age";
 import { getFeedingDayRange, getTodayIsrael } from "@/utils/date";
+import { sleepDurationMinutes } from "@/utils/sleep";
 import { Baby, FeedingEntry, GrowthMeasurement, Milestone, SleepEntry, TastingEntry } from "@/models";
 import type { DashboardStats } from "@/types";
 
@@ -15,12 +15,9 @@ export async function getDashboardStats(
   const baby = await Baby.findOne({ _id: babyId, userId }).select("_id birthWeight").lean();
   if (!baby) return null;
 
-  const now = new Date();
-  const dayStart = startOfDay(now);
-  const dayEnd = endOfDay(now);
-  const { start: feedingDayStart, end: feedingDayEnd } = getFeedingDayRange(
-    dateStr ?? getTodayIsrael()
-  );
+  const dayKey = dateStr ?? getTodayIsrael();
+  const { start: feedingDayStart, end: feedingDayEnd } = getFeedingDayRange(dayKey);
+  const { start: sleepDayStart, end: sleepDayEnd } = getFeedingDayRange(dayKey);
 
   const [lastGrowth, todayFeedings, todaySleep, lastMilestone, lastTasting] = await Promise.all([
     GrowthMeasurement.findOne({ babyId })
@@ -32,9 +29,10 @@ export async function getDashboardStats(
       .lean(),
     SleepEntry.find({
       babyId,
+      endTime: { $ne: null },
       $or: [
-        { startTime: { $gte: dayStart, $lte: dayEnd } },
-        { endTime: { $gte: dayStart, $lte: dayEnd } },
+        { startTime: { $gte: sleepDayStart, $lte: sleepDayEnd } },
+        { endTime: { $gte: sleepDayStart, $lte: sleepDayEnd } },
       ],
     })
       .select("startTime endTime")
@@ -54,9 +52,13 @@ export async function getDashboardStats(
 
   const todaySleepMinutes = todaySleep.reduce((sum, s) => {
     if (!s.endTime) return sum;
-    const start = new Date(s.startTime).getTime();
-    const end = new Date(s.endTime).getTime();
-    return sum + Math.max(0, Math.round((end - start) / 60000));
+    return (
+      sum +
+      sleepDurationMinutes({
+        startTime: new Date(s.startTime).toISOString(),
+        endTime: new Date(s.endTime).toISOString(),
+      })
+    );
   }, 0);
 
   return {

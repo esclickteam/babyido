@@ -13,6 +13,7 @@ import { getExactAge, minutesToHoursMinutes } from "@/utils/age";
 import { formatShortDate } from "@/utils/date";
 import type { DashboardStats, Locale } from "@/types";
 import { DashboardFeedingSection } from "@/components/dashboard/dashboard-feeding-section";
+import { DashboardSleepSection } from "@/components/dashboard/dashboard-sleep-section";
 
 interface DashboardContentProps {
   initialStats?: DashboardStats | null;
@@ -84,6 +85,8 @@ export function DashboardContent({ initialStats, selectedBabyId }: DashboardCont
       </GlassCard>
 
       <DashboardFeedingSection babyId={baby._id} />
+
+      <DashboardSleepSection babyId={baby._id} />
 
       {showStatsSkeleton ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
