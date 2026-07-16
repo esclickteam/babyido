@@ -448,10 +448,18 @@
   },
   "gallery": {
     "title": "גלריית גיל",
-    "subtitle": "תמונה לכל חודש — מהחודש הראשון ועד שנה",
+    "subtitle": "נולדתי ועד שנה — עד 10 תמונות לכל שלב",
     "addPhoto": "הוסיפו תמונה",
     "saved": "התמונה נשמרה",
-    "hint": "לחצו על כרטיס כדי להעלות או להחליף תמונה"
+    "deleted": "התמונה נמחקה",
+    "hint": "לחצו על תמונה להגדלה ומעבר בין תמונות · כפתור + להוספה",
+    "maxPhotos": "ניתן להעלות עד {max} תמונות לשלב",
+    "photoCount": "{count}/{max}",
+    "photoCounter": "{current} מתוך {total}",
+    "prevPhoto": "תמונה קודמת",
+    "nextPhoto": "תמונה הבאה",
+    "closeViewer": "סגירה",
+    "cloudinaryMissing": "העלאת תמונות לא מוגדרת — הוסיפו Cloudinary לשרת"
   },
   "notifications": {
     "title": "התראות",

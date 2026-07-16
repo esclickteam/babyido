@@ -158,13 +158,12 @@ export const wellBabyVisitSchema = z.object({
 
 export type WellBabyVisitInput = z.infer<typeof wellBabyVisitSchema>;
 
-export const galleryPhotoSchema = z.object({
+export const galleryPhotoUploadSchema = z.object({
   babyId: z.string().min(1),
-  ageMonths: z.number().int().min(1).max(12),
-  photoUrl: z.string().max(600_000),
+  ageMonths: z.number().int().min(0).max(12),
 });
 
-export type GalleryPhotoInput = z.infer<typeof galleryPhotoSchema>;
+export type GalleryPhotoUploadInput = z.infer<typeof galleryPhotoUploadSchema>;
 
 export const numberField = {
   setValueAs: (value: string) => (value === "" ? undefined : Number(value)),

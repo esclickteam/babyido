@@ -1,4 +1,24 @@
 import type { Locale } from "@/types";
+import { GALLERY_BIRTH_AGE_MONTHS } from "@/constants/gallery";
+import { formatShortDate } from "@/utils/date";
+
+/** Label for gallery slot: birth date for slot 0, monthly age otherwise. */
+export function formatGallerySlotLabel(
+  ageMonths: number,
+  locale: Locale,
+  birthDate?: string
+): string {
+  if (ageMonths === GALLERY_BIRTH_AGE_MONTHS) {
+    if (locale === "he") {
+      return birthDate ? `נולדתי · ${formatShortDate(birthDate, locale)}` : "נולדתי";
+    }
+    return birthDate
+      ? `Born · ${formatShortDate(birthDate, locale)}`
+      : "Born";
+  }
+
+  return formatGalleryMonthLabel(ageMonths, locale);
+}
 
 /** Hebrew label for monthly gallery slot: "היום אני בן חודש" … "היום אני בן שנה". */
 export function formatGalleryMonthLabel(ageMonths: number, locale: Locale): string {
@@ -14,4 +34,4 @@ export function formatGalleryMonthLabel(ageMonths: number, locale: Locale): stri
   return `Today I'm ${ageMonths} months old`;
 }
 
-export const GALLERY_MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
+export { GALLERY_AGE_SLOTS, GALLERY_MAX_PHOTOS_PER_SLOT } from "@/constants/gallery";

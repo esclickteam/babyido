@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/config";
 import { getOwnedBaby } from "@/lib/api/baby-access";
 import { connectDB } from "@/lib/db/mongodb";
+import { deleteCloudinaryImage } from "@/lib/cloudinary";
 import { GalleryPhoto } from "@/models/GalleryPhoto";
 
 export async function DELETE(
@@ -24,6 +25,10 @@ export async function DELETE(
     const baby = await getOwnedBaby(existing.babyId.toString(), session.user.id);
     if (!baby) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    if (existing.cloudinaryPublicId) {
+      await deleteCloudinaryImage(existing.cloudinaryPublicId);
     }
 
     await GalleryPhoto.deleteOne({ _id: id });

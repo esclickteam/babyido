@@ -300,10 +300,18 @@
   },
   "gallery": {
     "title": "Age gallery",
-    "subtitle": "One photo per month — from month 1 to year 1",
+    "subtitle": "From birth to year 1 — up to 10 photos per stage",
     "addPhoto": "Add photo",
     "saved": "Photo saved",
-    "hint": "Tap a card to upload or replace a photo"
+    "deleted": "Photo deleted",
+    "hint": "Tap a photo to enlarge and swipe · use + to add more",
+    "maxPhotos": "Up to {max} photos per stage",
+    "photoCount": "{count}/{max}",
+    "photoCounter": "{current} of {total}",
+    "prevPhoto": "Previous photo",
+    "nextPhoto": "Next photo",
+    "closeViewer": "Close",
+    "cloudinaryMissing": "Photo upload is not configured — add Cloudinary to the server"
   },
   "notifications": {
     "title": "Notifications",

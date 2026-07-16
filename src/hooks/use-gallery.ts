@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deleteGalleryPhoto,
   fetchGalleryPhotos,
-  upsertGalleryPhoto,
+  uploadGalleryPhoto,
 } from "@/services/gallery.service";
 
 export function useGalleryPhotos(babyId: string | null) {
@@ -15,10 +15,10 @@ export function useGalleryPhotos(babyId: string | null) {
   });
 }
 
-export function useUpsertGalleryPhoto(babyId: string | null) {
+export function useUploadGalleryPhoto(babyId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: upsertGalleryPhoto,
+    mutationFn: uploadGalleryPhoto,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["gallery-photos", babyId] }),
   });
 }

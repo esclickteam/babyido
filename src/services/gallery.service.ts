@@ -6,17 +6,32 @@ export async function fetchGalleryPhotos(babyId: string): Promise<GalleryPhoto[]
   return res.json();
 }
 
-export async function upsertGalleryPhoto(data: {
+export async function uploadGalleryPhoto(data: {
   babyId: string;
   ageMonths: number;
-  photoUrl: string;
+  file: File;
 }): Promise<GalleryPhoto> {
+  const formData = new FormData();
+  formData.append("file", data.file);
+  formData.append("babyId", data.babyId);
+  formData.append("ageMonths", String(data.ageMonths));
+
   const res = await fetch("/api/gallery-photos", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    body: formData,
   });
-  if (!res.ok) throw new Error("Failed to save photo");
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    if (body.error === "maxPhotosReached") {
+      throw new Error("maxPhotosReached");
+    }
+    if (body.error === "Cloudinary not configured") {
+      throw new Error("cloudinaryNotConfigured");
+    }
+    throw new Error("Failed to save photo");
+  }
+
   return res.json();
 }
 

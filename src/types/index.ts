@@ -231,6 +231,7 @@ export interface GalleryPhoto {
   babyId: string;
   ageMonths: number;
   photoUrl: string;
+  cloudinaryPublicId?: string;
   createdAt: string;
   updatedAt: string;
 }
