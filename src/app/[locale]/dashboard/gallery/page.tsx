@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { setRequestLocale } from "next-intl/server";
 import { GalleryContent } from "@/components/gallery/gallery-content";
 import { PageContainer } from "@/components/shared/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,7 +9,7 @@ export default async function GalleryPage({ params }: { params: Promise<{ locale
   setRequestLocale(locale);
   const t = await getTranslations("nav");
   return (
-    <PageContainer title={t("gallery")}>
+    <PageContainer>
       <Suspense fallback={<Skeleton className="h-96 w-full rounded-3xl" />}>
         <GalleryContent />
       </Suspense>

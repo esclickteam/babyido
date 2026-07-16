@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ export function GalleryContent() {
   const locale = useLocale() as Locale;
   const baby = useBabyStore((s) => s.getSelectedBaby());
   const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
   const [viewer, setViewer] = useState<{ slot: number } | null>(null);
@@ -123,6 +124,16 @@ export function GalleryContent() {
     setViewer({ slot });
   }
 
+  function scrollStrip(direction: "prev" | "next") {
+    const el = scrollRef.current;
+    if (!el) return;
+    const amount = Math.min(el.clientWidth * 0.85, 360);
+    el.scrollBy({
+      left: direction === "next" ? amount : -amount,
+      behavior: "smooth",
+    });
+  }
+
   async function handleDeleteFromViewer(photo: GalleryPhoto) {
     try {
       await remove.mutateAsync(photo._id);
@@ -137,7 +148,7 @@ export function GalleryContent() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-4">
+    <div className="mx-auto w-full max-w-6xl space-y-6">
       <input
         ref={inputRef}
         type="file"
@@ -151,40 +162,71 @@ export function GalleryContent() {
         }}
       />
 
-      <div className="flex items-center gap-3 rounded-2xl border border-[var(--stroke)]/70 bg-white/90 px-4 py-3 shadow-sm">
-        <div className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-400 to-orange-500 text-white shadow-md">
-          <Camera className="size-6 ms-icon-float" />
-        </div>
-        <div>
-          <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--grass-deep)]">
-            {t("title")}
-          </h2>
-          <p className="text-xs text-muted-foreground">{t("subtitle")}</p>
-        </div>
-      </div>
+      <section className="overflow-hidden rounded-[2rem] bg-[#1a2218] text-white shadow-2xl shadow-[#1a2218]/20">
+        <div className="flex items-end justify-between gap-4 px-5 pb-2 pt-8 md:px-10 md:pt-10">
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold tracking-[0.28em] text-white/40 uppercase">
+              {t("eyebrow")}
+            </p>
+            <h2 className="font-[family-name:var(--font-display)] text-2xl font-bold md:text-4xl">
+              {t("title")}
+            </h2>
+            <p className="max-w-md text-sm text-white/55">{t("subtitle")}</p>
+          </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {GALLERY_AGE_SLOTS.map((slot) => (
-            <div key={slot} className="aspect-[3/4] animate-pulse rounded-2xl bg-muted/40" />
-          ))}
+          <div className="hidden shrink-0 gap-2 md:flex">
+            <button
+              type="button"
+              onClick={() => scrollStrip("prev")}
+              className="flex size-11 items-center justify-center rounded-full border border-white/15 text-white/80 transition hover:border-white/35 hover:text-white"
+              aria-label={t("scrollPrev")}
+            >
+              <ChevronRight className="size-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollStrip("next")}
+              className="flex size-11 items-center justify-center rounded-full border border-white/15 text-white/80 transition hover:border-white/35 hover:text-white"
+              aria-label={t("scrollNext")}
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {GALLERY_AGE_SLOTS.map((slot) => (
-            <GallerySlotCard
-              key={slot}
-              label={formatGallerySlotLabel(slot, locale, baby.birthDate)}
-              photos={photosBySlot.get(slot) ?? []}
-              isBusy={uploadingSlot === slot}
-              onUpload={() => openUpload(slot)}
-              onOpenViewer={() => openViewer(slot)}
-            />
-          ))}
-        </div>
-      )}
 
-      <p className="text-center text-[11px] text-muted-foreground">{t("hint")}</p>
+        {isLoading ? (
+          <div className="flex gap-5 overflow-hidden px-5 py-8 md:px-10">
+            {GALLERY_AGE_SLOTS.map((slot) => (
+              <div
+                key={slot}
+                className="aspect-[3/4] w-[min(78vw,340px)] shrink-0 animate-pulse rounded-sm bg-[#394b33]"
+              />
+            ))}
+          </div>
+        ) : (
+          <div
+            ref={scrollRef}
+            dir="ltr"
+            className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-5 py-8 [scrollbar-width:none] md:gap-8 md:px-10 md:py-10 [&::-webkit-scrollbar]:hidden"
+          >
+            {GALLERY_AGE_SLOTS.map((slot, slotIndex) => (
+              <GallerySlotCard
+                key={slot}
+                slotIndex={slotIndex}
+                label={formatGallerySlotLabel(slot, locale, baby.birthDate)}
+                photos={photosBySlot.get(slot) ?? []}
+                isBusy={uploadingSlot === slot}
+                onUpload={() => openUpload(slot)}
+                onOpenViewer={() => openViewer(slot)}
+              />
+            ))}
+          </div>
+        )}
+
+        <p className="px-5 pb-8 text-center text-[11px] tracking-wide text-white/35 md:pb-10">
+          {t("scrollHint")}
+        </p>
+      </section>
 
       <GalleryLightbox
         photos={viewerPhotos}
