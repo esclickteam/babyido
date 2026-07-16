@@ -4,11 +4,16 @@ import type { Locale } from "@/types";
 /** Parse any date value to local calendar day (no timezone shift). */
 export function parseBirthDate(birthDate: Date | string): Date {
   if (birthDate instanceof Date) {
-    return new Date(birthDate.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+    return new Date(
+      birthDate.getUTCFullYear(),
+      birthDate.getUTCMonth(),
+      birthDate.getUTCDate()
+    );
   }
 
-  if (/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
-    const [year, month, day] = birthDate.split("-").map(Number);
+  if (/^\d{4}-\d{2}-\d{2}/.test(birthDate)) {
+    const dateOnly = birthDate.split("T")[0];
+    const [year, month, day] = dateOnly.split("-").map(Number);
     return new Date(year, month - 1, day);
   }
 

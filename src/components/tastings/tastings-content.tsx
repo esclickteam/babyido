@@ -16,7 +16,7 @@ import {
 import { useStartSolids } from "@/hooks/use-babies";
 import { useCreateTasting, useDeleteTasting, useTastings } from "@/hooks/use-tastings";
 import { useBabyStore } from "@/stores/baby-store";
-import { formatDate, getTodayLocal } from "@/utils/date";
+import { formatDate, getExactAge, getTodayLocal } from "@/utils/date";
 import { getBabyAgeInMonths } from "@/utils/age";
 import {
   findNextRecommendedFoodId,
@@ -92,6 +92,7 @@ export function TastingsContent() {
   }, [searchParams]);
 
   const babyAgeMonths = baby ? getBabyAgeInMonths(baby.birthDate) : 0;
+  const babyExactAge = baby ? getExactAge(baby.birthDate, locale) : "";
 
   const tastedFoodIds = useMemo(
     () => new Set(tastings?.map((entry) => entry.foodId ?? entry.foodName) ?? []),
@@ -283,7 +284,7 @@ export function TastingsContent() {
           title={t("startSolidsTitle")}
           mohLine={t("startSolidsMoh", { month: MOH_RECOMMENDED_SOLIDS_MONTH })}
           flexLine={t("startSolidsFlex")}
-          ageLine={t("startSolidsAge", { months: babyAgeMonths })}
+          ageLine={t("startSolidsAge", { age: babyExactAge })}
           buttonLabel={t("startSolidsButton")}
           loading={startSolids.isPending}
           onStart={handleStartSolids}

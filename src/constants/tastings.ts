@@ -31,7 +31,7 @@ function food(
   return { id, nameHe, nameEn, category, fromMonth, emoji, isAllergen };
 }
 
-/** לפי משרד הבריאות — גיל מומלץ להתחלת הכרת מזנים */
+/** לפי משרד הבריאות — גיל מומלץ להתחלת טעימות */
 export const MOH_RECOMMENDED_SOLIDS_MONTH = 6;
 
 /** 9 שלבי הכרת מזון מומלצים */
