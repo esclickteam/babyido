@@ -18,6 +18,7 @@ export function useCreateTasting(babyId: string | null) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tastings", babyId] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats", babyId] });
+      queryClient.invalidateQueries({ queryKey: ["babies"] });
     },
   });
 }

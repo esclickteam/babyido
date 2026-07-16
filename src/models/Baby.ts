@@ -15,6 +15,7 @@ export interface IBaby {
   birthType?: "vaginal" | "cesarean" | "other";
   hospital?: string;
   feedingType?: "breast" | "formula" | "mixed" | "solids";
+  solidsStartedAt?: Date;
   allergies: string[];
   notes?: string;
   createdAt: Date;
@@ -36,6 +37,7 @@ const BabySchema = new Schema<IBaby>(
     birthType: { type: String, enum: ["vaginal", "cesarean", "other"] },
     hospital: { type: String },
     feedingType: { type: String, enum: ["breast", "formula", "mixed", "solids"] },
+    solidsStartedAt: { type: Date },
     allergies: { type: [String], default: [] },
     notes: { type: String },
   },

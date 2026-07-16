@@ -4,6 +4,7 @@ import { getOwnedBaby } from "@/lib/api/baby-access";
 import { connectDB } from "@/lib/db/mongodb";
 import { dateOnlyToMongo, toDateOnlyString } from "@/utils/date";
 import { tastingEntrySchema } from "@/lib/validations/modules";
+import { Baby } from "@/models/Baby";
 import { TastingEntry } from "@/models/TastingEntry";
 
 export async function GET(request: Request) {
@@ -59,12 +60,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
-    if (!(await getOwnedBaby(parsed.data.babyId, session.user.id))) {
+    await connectDB();
+    const tastedDateStr = toDateOnlyString(parsed.data.tastedDate);
+
+    const baby = await getOwnedBaby(parsed.data.babyId, session.user.id);
+    if (!baby) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    await connectDB();
-    const tastedDateStr = toDateOnlyString(parsed.data.tastedDate);
+    if (!baby.solidsStartedAt) {
+      await Baby.findByIdAndUpdate(parsed.data.babyId, {
+        solidsStartedAt: dateOnlyToMongo(tastedDateStr),
+      });
+    }
+
     const item = await TastingEntry.create({
       babyId: parsed.data.babyId,
       foodName: parsed.data.foodName,

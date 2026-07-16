@@ -41,6 +41,12 @@ export async function deleteBaby(id: string): Promise<void> {
   if (!res.ok) throw new Error("Failed to delete baby");
 }
 
+export async function startSolids(babyId: string): Promise<Baby> {
+  const res = await fetch(`/api/babies/${babyId}/start-solids`, { method: "POST" });
+  if (!res.ok) throw new Error("Failed to start solids");
+  return res.json();
+}
+
 export async function fetchDashboardStats(babyId: string): Promise<DashboardStats> {
   const params = new URLSearchParams({ babyId, date: getTodayLocal() });
   const res = await fetch(`/api/dashboard/stats?${params}`);

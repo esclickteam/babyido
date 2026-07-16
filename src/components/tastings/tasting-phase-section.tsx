@@ -26,7 +26,7 @@ const PHASE_COLORS = [
 
 interface TastingPhaseSectionProps {
   phase: TastingPhase;
-  babyAgeMonths: number;
+  hasStarted: boolean;
   tastings: TastingEntry[];
   defaultOpen?: boolean;
   getStatusLabel: (status: ReturnType<typeof getFoodStatus>) => string;
@@ -37,7 +37,7 @@ interface TastingPhaseSectionProps {
 
 export function TastingPhaseSection({
   phase,
-  babyAgeMonths,
+  hasStarted,
   tastings,
   defaultOpen = false,
   getStatusLabel,
@@ -47,7 +47,7 @@ export function TastingPhaseSection({
 }: TastingPhaseSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const tastingsByFood = getTastingsByFoodId(tastings);
-  const nextId = findNextRecommendedFoodId(babyAgeMonths, tastingsByFood);
+  const nextId = findNextRecommendedFoodId(tastingsByFood, hasStarted);
 
   const uniqueFoods = phase.foods.filter(
     (food, index, arr) => arr.findIndex((f) => f.id === food.id) === index
@@ -57,7 +57,12 @@ export function TastingPhaseSection({
   const color = PHASE_COLORS[(phase.id - 1) % PHASE_COLORS.length];
 
   return (
-    <section className="overflow-hidden rounded-3xl border border-[var(--stroke)] bg-white/80 shadow-sm">
+    <section
+      className={cn(
+        "overflow-hidden rounded-3xl border border-[var(--stroke)] bg-white/80 shadow-sm transition",
+        !hasStarted && "opacity-90"
+      )}
+    >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -87,8 +92,8 @@ export function TastingPhaseSection({
         <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
           {uniqueFoods.map((food) => {
             const entry = tastingsByFood.get(food.id);
-            const status = getFoodStatus(food.id, food.fromMonth, babyAgeMonths, entry, nextId);
-            const canLog = status !== "too_early";
+            const status = getFoodStatus(food.id, entry, nextId, hasStarted);
+            const canLog = hasStarted && status !== "too_early" && status !== "not_started";
 
             return (
               <TastingFoodCard

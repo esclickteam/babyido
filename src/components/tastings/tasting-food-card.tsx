@@ -25,7 +25,7 @@ export function TastingFoodCard({
   onClick,
 }: TastingFoodCardProps) {
   const meta = FOOD_STATUS_META[status];
-  const isInteractive = !disabled && onClick && status !== "too_early";
+  const isInteractive = !disabled && onClick && status !== "too_early" && status !== "not_started";
 
   const content = (
     <>

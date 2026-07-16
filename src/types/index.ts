@@ -24,6 +24,7 @@ export interface Baby {
   birthType?: BirthType;
   hospital?: string;
   feedingType?: FeedingPreference;
+  solidsStartedAt?: string;
   allergies?: string[];
   notes?: string;
   createdAt: string;

@@ -7,11 +7,13 @@ import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { FOOD_CATEGORIES, type FoodCategory, type TastingReaction } from "@/constants/feeding";
 import {
+  MOH_RECOMMENDED_SOLIDS_MONTH,
   ORDERED_FOODS,
   TASTING_ORDER,
   TASTING_PHASES,
   type FoodItem,
 } from "@/constants/tastings";
+import { useStartSolids } from "@/hooks/use-babies";
 import { useCreateTasting, useDeleteTasting, useTastings } from "@/hooks/use-tastings";
 import { useBabyStore } from "@/stores/baby-store";
 import { formatDate, getTodayLocal } from "@/utils/date";
@@ -21,6 +23,7 @@ import {
   FOOD_STATUS_META,
   getFoodStatus,
   getTastingsByFoodId,
+  hasSolidsStarted,
   type FoodStatus,
 } from "@/utils/tasting-status";
 import type { Locale } from "@/types";
@@ -32,6 +35,7 @@ import { NoBabyPrompt } from "@/components/shared/no-baby-prompt";
 import { TastingFoodSearch } from "@/components/tastings/tasting-food-search";
 import { TastingPhaseSection } from "@/components/tastings/tasting-phase-section";
 import { TastingReactionFields } from "@/components/tastings/tasting-reaction-fields";
+import { TastingStartPanel } from "@/components/tastings/tasting-start-panel";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -78,6 +82,7 @@ export function TastingsContent() {
   const { data: tastings, isLoading } = useTastings(baby?._id ?? null);
   const createTasting = useCreateTasting(baby?._id ?? null);
   const deleteTasting = useDeleteTasting(baby?._id ?? null);
+  const startSolids = useStartSolids();
 
   useEffect(() => {
     if (searchParams.get("action") === "add") {
@@ -98,9 +103,11 @@ export function TastingsContent() {
     [tastings]
   );
 
+  const solidsStarted = hasSolidsStarted(baby?.solidsStartedAt, tastings?.length ?? 0);
+
   const nextRecommendedId = useMemo(
-    () => findNextRecommendedFoodId(babyAgeMonths, tastingsByFood),
-    [babyAgeMonths, tastingsByFood]
+    () => findNextRecommendedFoodId(tastingsByFood, solidsStarted),
+    [tastingsByFood, solidsStarted]
   );
 
   const orderedProgress = useMemo(
@@ -118,9 +125,10 @@ export function TastingsContent() {
   const statusLabel = (status: FoodStatus) => t(`status.${status}`);
 
   function openFood(food: FoodItem) {
+    if (!solidsStarted) return;
     const entry = tastingsByFood.get(food.id);
-    const status = getFoodStatus(food.id, food.fromMonth, babyAgeMonths, entry, nextRecommendedId);
-    if (status === "too_early") return;
+    const status = getFoodStatus(food.id, entry, nextRecommendedId, solidsStarted);
+    if (status === "too_early" || status === "not_started") return;
     setLogTarget({ kind: food.orderIndex ? "ordered" : "catalog", food });
     setReactions([]);
     setNotes("");
@@ -154,6 +162,16 @@ export function TastingsContent() {
 
   function openCatalogFood(food: FoodItem) {
     openFood(food);
+  }
+
+  async function handleStartSolids() {
+    if (!baby) return;
+    try {
+      await startSolids.mutateAsync(baby._id);
+      toast.success(t("startSolidsSuccess"));
+    } catch {
+      toast.error(tc("error"));
+    }
   }
 
   async function handleSave() {
@@ -259,7 +277,29 @@ export function TastingsContent() {
         ))}
       </div>
 
-      {nextRecommended && tab === "recommended" && (
+      {tab === "recommended" && !solidsStarted && (
+        <TastingStartPanel
+          babyAgeMonths={babyAgeMonths}
+          title={t("startSolidsTitle")}
+          mohLine={t("startSolidsMoh", { month: MOH_RECOMMENDED_SOLIDS_MONTH })}
+          flexLine={t("startSolidsFlex")}
+          ageLine={t("startSolidsAge", { months: babyAgeMonths })}
+          buttonLabel={t("startSolidsButton")}
+          loading={startSolids.isPending}
+          onStart={handleStartSolids}
+        />
+      )}
+
+      {tab === "recommended" && solidsStarted && baby.solidsStartedAt && (
+        <IdoPanel className="flex items-center gap-3 border-[var(--grass)]/30 bg-[var(--grass)]/8 p-4">
+          <span className="text-2xl" aria-hidden>🥄</span>
+          <p className="text-sm font-semibold text-[var(--grass-deep)]">
+            {t("startSolidsStarted", { date: formatDate(baby.solidsStartedAt, locale) })}
+          </p>
+        </IdoPanel>
+      )}
+
+      {nextRecommended && solidsStarted && tab === "recommended" && (
         <IdoPanel className="relative overflow-hidden border-[var(--coral)]/40 bg-gradient-to-l from-[#fff6f0] via-white to-[#f0faf4] p-5 sm:p-6">
           <div className="absolute -left-6 -top-6 size-24 rounded-full bg-[var(--coral)]/10 blur-2xl" />
           <div className="relative flex flex-col items-stretch gap-4 sm:flex-row sm:items-center">
@@ -291,15 +331,17 @@ export function TastingsContent() {
             <SectionTitle>{t("statusLegend")}</SectionTitle>
             <div className="flex flex-wrap gap-2">
               {(
-                [
-                  "too_early",
-                  "recommended_now",
-                  "tasted",
-                  "loved",
-                  "neutral",
-                  "try_again",
-                  "had_reaction",
-                ] as FoodStatus[]
+                solidsStarted
+                  ? ([
+                      "too_early",
+                      "recommended_now",
+                      "tasted",
+                      "loved",
+                      "neutral",
+                      "try_again",
+                      "had_reaction",
+                    ] as FoodStatus[])
+                  : (["not_started"] as FoodStatus[])
               ).map((status) => (
                 <span
                   key={status}
@@ -320,11 +362,12 @@ export function TastingsContent() {
             <TastingPhaseSection
               key={phase.id}
               phase={phase}
-              babyAgeMonths={babyAgeMonths}
+              hasStarted={solidsStarted}
               tastings={tastings ?? []}
               defaultOpen={
-                phase.id === 1 ||
-                phase.foods.some((food) => food.id === nextRecommendedId)
+                !solidsStarted
+                  ? phase.id === 1
+                  : phase.id === 1 || phase.foods.some((food) => food.id === nextRecommendedId)
               }
               getStatusLabel={statusLabel}
               fromMonthLabel={(month) => t("fromMonth", { month })}
@@ -438,10 +481,9 @@ export function TastingsContent() {
               {tastings.map((item) => {
                 const status = getFoodStatus(
                   item.foodId ?? item.foodName,
-                  0,
-                  babyAgeMonths,
                   item,
-                  null
+                  null,
+                  solidsStarted
                 );
                 const meta = FOOD_STATUS_META[status];
 

@@ -16,6 +16,7 @@ export function serializeBaby(baby: {
   birthType?: Baby["birthType"];
   hospital?: string;
   feedingType?: Baby["feedingType"];
+  solidsStartedAt?: Date;
   allergies?: string[];
   notes?: string;
   createdAt: Date;
@@ -36,6 +37,7 @@ export function serializeBaby(baby: {
     birthType: baby.birthType,
     hospital: baby.hospital,
     feedingType: baby.feedingType,
+    solidsStartedAt: baby.solidsStartedAt ? toDateOnlyString(baby.solidsStartedAt) : undefined,
     allergies: baby.allergies ?? [],
     notes: baby.notes,
     createdAt: baby.createdAt.toISOString(),

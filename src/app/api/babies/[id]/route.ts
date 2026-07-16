@@ -2,31 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/config";
 import { connectDB } from "@/lib/db/mongodb";
 import { dateOnlyToMongo, toDateOnlyString } from "@/utils/date";
+import { serializeBaby } from "@/lib/data/serialize-baby";
 import { babySchema } from "@/lib/validations/baby";
 import { Baby } from "@/models/Baby";
-
-function serializeBaby(baby: InstanceType<typeof Baby>) {
-  return {
-    _id: baby._id.toString(),
-    userId: baby.userId.toString(),
-    name: baby.name,
-    photoUrl: baby.photoUrl,
-    birthDate: toDateOnlyString(baby.birthDate),
-    birthTime: baby.birthTime,
-    gender: baby.gender,
-    gestationalWeek: baby.gestationalWeek,
-    birthWeight: baby.birthWeight,
-    birthHeight: baby.birthHeight,
-    birthHeadCircumference: baby.birthHeadCircumference,
-    birthType: baby.birthType,
-    hospital: baby.hospital,
-    feedingType: baby.feedingType,
-    allergies: baby.allergies ?? [],
-    notes: baby.notes,
-    createdAt: baby.createdAt.toISOString(),
-    updatedAt: baby.updatedAt.toISOString(),
-  };
-}
 
 export async function GET(
   _request: Request,

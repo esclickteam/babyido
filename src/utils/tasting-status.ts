@@ -2,7 +2,11 @@ import type { TastingReaction } from "@/constants/feeding";
 import type { TastingEntry } from "@/types";
 import { ORDERED_FOODS } from "@/constants/tastings";
 
+/** Ministry of Health recommended age to start solids (months) */
+export const MOH_RECOMMENDED_SOLIDS_MONTH = 6;
+
 export type FoodStatus =
+  | "not_started"
   | "too_early"
   | "recommended_now"
   | "tasted"
@@ -20,6 +24,13 @@ const WARNING_REACTIONS: TastingReaction[] = [
   "diarrhea",
 ];
 
+export function hasSolidsStarted(
+  solidsStartedAt: string | undefined,
+  tastingsCount: number
+): boolean {
+  return !!solidsStartedAt || tastingsCount > 0;
+}
+
 export function getTastingsByFoodId(tastings: TastingEntry[]): Map<string, TastingEntry> {
   const map = new Map<string, TastingEntry>();
   for (const entry of tastings) {
@@ -30,12 +41,13 @@ export function getTastingsByFoodId(tastings: TastingEntry[]): Map<string, Tasti
 }
 
 export function findNextRecommendedFoodId(
-  babyAgeMonths: number,
-  tastingsByFood: Map<string, TastingEntry>
+  tastingsByFood: Map<string, TastingEntry>,
+  hasStarted: boolean
 ): string | null {
+  if (!hasStarted) return null;
+
   for (const food of ORDERED_FOODS) {
     if (tastingsByFood.has(food.id)) continue;
-    if (babyAgeMonths < food.fromMonth) continue;
     return food.id;
   }
   return null;
@@ -43,13 +55,13 @@ export function findNextRecommendedFoodId(
 
 export function getFoodStatus(
   foodId: string,
-  fromMonth: number,
-  babyAgeMonths: number,
   entry: TastingEntry | undefined,
-  nextRecommendedId: string | null
+  nextRecommendedId: string | null,
+  hasStarted: boolean
 ): FoodStatus {
+  if (!hasStarted) return "not_started";
+
   if (!entry) {
-    if (babyAgeMonths < fromMonth) return "too_early";
     if (foodId === nextRecommendedId) return "recommended_now";
     return "too_early";
   }
@@ -69,6 +81,11 @@ export const FOOD_STATUS_META: Record<
   FoodStatus,
   { icon: string; colorClass: string; bgClass: string }
 > = {
+  not_started: {
+    icon: "⏳",
+    colorClass: "text-muted-foreground",
+    bgClass: "bg-muted/30 border-[var(--stroke)]",
+  },
   too_early: {
     icon: "⏳",
     colorClass: "text-muted-foreground",

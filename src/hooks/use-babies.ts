@@ -6,6 +6,7 @@ import {
   deleteBaby,
   fetchBabies,
   fetchDashboardStats,
+  startSolids,
   updateBaby,
 } from "@/services/baby.service";
 import { useBabyStore } from "@/stores/baby-store";
@@ -48,6 +49,19 @@ export function useUpdateBaby() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
       updateBaby(id, data),
+    onSuccess: (baby) => {
+      update(baby);
+      queryClient.invalidateQueries({ queryKey: ["babies"] });
+    },
+  });
+}
+
+export function useStartSolids() {
+  const queryClient = useQueryClient();
+  const update = useBabyStore((s) => s.updateBaby);
+
+  return useMutation({
+    mutationFn: startSolids,
     onSuccess: (baby) => {
       update(baby);
       queryClient.invalidateQueries({ queryKey: ["babies"] });

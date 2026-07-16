@@ -31,32 +31,35 @@ function food(
   return { id, nameHe, nameEn, category, fromMonth, emoji, isAllergen };
 }
 
+/** לפי משרד הבריאות — גיל מומלץ להתחלת הכרת מזנים */
+export const MOH_RECOMMENDED_SOLIDS_MONTH = 6;
+
 /** 9 שלבי הכרת מזון מומלצים */
 export const TASTING_PHASES: TastingPhase[] = [
   {
     id: 1,
     titleHe: "טעימות ראשונות",
-    subtitleHe: "5–10 ימים לכל מאכל · מאכל אחד בכל פעם",
-    fromMonth: 4,
+    subtitleHe: "5–10 ימים לכל מאכל · מאכל אחד בכל פעם · מומלץ מגיל 6 חודשים",
+    fromMonth: 6,
     foods: [
-      food("sweet-potato", "בטטה", "Sweet potato", "vegetables", 4, "🍠"),
-      food("zucchini", "קישוא", "Zucchini", "vegetables", 4, "🥒"),
-      food("carrot", "גזר", "Carrot", "vegetables", 4, "🥕"),
-      food("pumpkin", "דלעת", "Pumpkin", "vegetables", 4, "🎃"),
-      food("avocado", "אבוקדו", "Avocado", "fruits", 4, "🥑"),
+      food("sweet-potato", "בטטה", "Sweet potato", "vegetables", 6, "🍠"),
+      food("zucchini", "קישוא", "Zucchini", "vegetables", 6, "🥒"),
+      food("carrot", "גזר", "Carrot", "vegetables", 6, "🥕"),
+      food("pumpkin", "דלעת", "Pumpkin", "vegetables", 6, "🎃"),
+      food("avocado", "אבוקדו", "Avocado", "fruits", 6, "🥑"),
     ],
   },
   {
     id: 2,
     titleHe: "פירות ראשונים",
     subtitleHe: "פירות מבושלים או רכים",
-    fromMonth: 5,
+    fromMonth: 6,
     foods: [
-      food("pear", "אגס", "Pear", "fruits", 5, "🍐"),
-      food("apple-cooked", "תפוח מבושל", "Cooked apple", "fruits", 5, "🍎"),
-      food("banana", "בננה", "Banana", "fruits", 5, "🍌"),
-      food("peach", "אפרסק", "Peach", "fruits", 5, "🍑"),
-      food("mango", "מנגו", "Mango", "fruits", 5, "🥭"),
+      food("pear", "אגס", "Pear", "fruits", 6, "🍐"),
+      food("apple-cooked", "תפוח מבושל", "Cooked apple", "fruits", 6, "🍎"),
+      food("banana", "בננה", "Banana", "fruits", 6, "🍌"),
+      food("peach", "אפרסק", "Peach", "fruits", 6, "🍑"),
+      food("mango", "מנגו", "Mango", "fruits", 6, "🥭"),
     ],
   },
   {
