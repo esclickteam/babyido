@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { VaccinationsContent } from "@/components/vaccinations/vaccinations-content";
 import { PageContainer } from "@/components/shared/page-container";
-import { ModuleScaffold } from "@/components/shared/module-scaffold";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default async function VaccinationsPage({
   params,
@@ -12,7 +14,9 @@ export default async function VaccinationsPage({
   const t = await getTranslations("nav");
   return (
     <PageContainer title={t("vaccinations")}>
-      <ModuleScaffold showLegal />
+      <Suspense fallback={<Skeleton className="h-96 w-full rounded-3xl" />}>
+        <VaccinationsContent />
+      </Suspense>
     </PageContainer>
   );
 }

@@ -94,6 +94,22 @@ export interface TastingEntry {
   createdAt: string;
 }
 
+export interface VaccinationRecord {
+  _id: string;
+  babyId: string;
+  vaccineId: string;
+  scheduledDate?: string;
+  completed: boolean;
+  completedDate?: string;
+  notes?: string;
+  sideEffects?: string;
+  reminderEnabled: boolean;
+  reminderSentAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** @deprecated use VaccinationRecord */
 export interface Vaccination {
   _id: string;
   babyId: string;
@@ -124,7 +140,7 @@ export interface DashboardStats {
   lastHeadCircumference?: number;
   lastTasting?: TastingEntry;
   lastMilestone?: Milestone;
-  nextVaccination?: Vaccination;
+  nextVaccination?: { vaccineId: string; nameHe: string; scheduledDate?: string; recommendedDate: string };
   nextWellBabyVisit?: string;
 }
 

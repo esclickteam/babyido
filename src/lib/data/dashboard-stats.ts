@@ -1,8 +1,10 @@
 import { connectDB } from "@/lib/db/mongodb";
+import { VACCINE_SCHEDULE, getVaccineById } from "@/constants/vaccinations";
 import { calculateDailyFormulaAmount } from "@/utils/age";
-import { getFeedingDayRange, getTodayIsrael } from "@/utils/date";
+import { getFeedingDayRange, getTodayIsrael, toDateOnlyString } from "@/utils/date";
 import { sleepDurationMinutes } from "@/utils/sleep";
-import { Baby, FeedingEntry, GrowthMeasurement, Milestone, SleepEntry, TastingEntry } from "@/models";
+import { getRecommendedVaccineDate } from "@/utils/vaccination-schedule";
+import { Baby, FeedingEntry, GrowthMeasurement, Milestone, SleepEntry, TastingEntry, VaccinationRecord } from "@/models";
 import type { DashboardStats } from "@/types";
 
 export async function getDashboardStats(
@@ -12,14 +14,15 @@ export async function getDashboardStats(
 ): Promise<DashboardStats | null> {
   await connectDB();
 
-  const baby = await Baby.findOne({ _id: babyId, userId }).select("_id birthWeight").lean();
+  const baby = await Baby.findOne({ _id: babyId, userId }).select("_id birthWeight birthDate").lean();
   if (!baby) return null;
 
   const dayKey = dateStr ?? getTodayIsrael();
   const { start: feedingDayStart, end: feedingDayEnd } = getFeedingDayRange(dayKey);
   const { start: sleepDayStart, end: sleepDayEnd } = getFeedingDayRange(dayKey);
 
-  const [lastGrowth, todayFeedings, todaySleep, lastMilestone, lastTasting] = await Promise.all([
+  const [lastGrowth, todayFeedings, todaySleep, lastMilestone, lastTasting, vaccinationRecords] =
+    await Promise.all([
     GrowthMeasurement.findOne({ babyId })
       .sort({ date: -1 })
       .select("weight height headCircumference")
@@ -42,6 +45,7 @@ export async function getDashboardStats(
       .sort({ tastedDate: -1 })
       .select("foodName category tastedDate reactions isAllergen notes isCustom foodId createdAt")
       .lean(),
+    VaccinationRecord.find({ babyId }).lean(),
   ]);
 
   const todayFeedingAmount = todayFeedings.reduce((sum, f) => sum + (f.amount ?? 0), 0);
@@ -60,6 +64,28 @@ export async function getDashboardStats(
       })
     );
   }, 0);
+
+  const birthDateStr = toDateOnlyString(baby.birthDate);
+  const recordMap = new Map(vaccinationRecords.map((r) => [r.vaccineId, r]));
+  let nextVaccination:
+    | { vaccineId: string; nameHe: string; scheduledDate?: string; recommendedDate: string }
+    | undefined;
+
+  for (const vaccine of VACCINE_SCHEDULE) {
+    if (vaccine.optional) continue;
+    const record = recordMap.get(vaccine.id);
+    if (record?.completed) continue;
+    const recommendedDate = getRecommendedVaccineDate(birthDateStr, vaccine);
+    nextVaccination = {
+      vaccineId: vaccine.id,
+      nameHe: `${vaccine.nameHe} (${vaccine.doseHe})`,
+      scheduledDate: record?.scheduledDate
+        ? toDateOnlyString(record.scheduledDate)
+        : undefined,
+      recommendedDate,
+    };
+    break;
+  }
 
   return {
     todayFeedingAmount,
@@ -95,7 +121,7 @@ export async function getDashboardStats(
           createdAt: new Date(lastTasting.createdAt).toISOString(),
         }
       : undefined,
-    nextVaccination: undefined,
+    nextVaccination,
     nextWellBabyVisit: undefined,
   };
 }

@@ -129,7 +129,22 @@ export function DashboardContent({ initialStats, selectedBabyId }: DashboardCont
             value={stats?.lastMilestone?.type ?? "—"}
             icon={<Sparkles className="size-4" />}
           />
-          <StatCard label={t("nextVaccination")} value="—" icon={<Syringe className="size-4" />} />
+          <StatCard
+            label={t("nextVaccination")}
+            value={
+              stats?.nextVaccination
+                ? stats.nextVaccination.nameHe
+                : "—"
+            }
+            subValue={
+              stats?.nextVaccination
+                ? stats.nextVaccination.scheduledDate
+                  ? formatShortDate(stats.nextVaccination.scheduledDate, locale)
+                  : `${t("recommended")}: ${formatShortDate(stats.nextVaccination.recommendedDate, locale)}`
+                : undefined
+            }
+            icon={<Syringe className="size-4" />}
+          />
           <StatCard label={t("nextWellBaby")} value="—" icon={<Stethoscope className="size-4" />} />
         </div>
       )}

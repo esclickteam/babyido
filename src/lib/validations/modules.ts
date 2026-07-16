@@ -99,6 +99,19 @@ export const tastingEntrySchema = z.object({
 
 export type TastingEntryInput = z.infer<typeof tastingEntrySchema>;
 
+export const vaccinationRecordSchema = z.object({
+  babyId: z.string().min(1),
+  vaccineId: z.string().min(1),
+  scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  completed: z.boolean().optional(),
+  completedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  notes: z.string().max(2000).optional(),
+  sideEffects: z.string().max(2000).optional(),
+  reminderEnabled: z.boolean().optional(),
+});
+
+export type VaccinationRecordInput = z.infer<typeof vaccinationRecordSchema>;
+
 export const numberField = {
   setValueAs: (value: string) => (value === "" ? undefined : Number(value)),
 };

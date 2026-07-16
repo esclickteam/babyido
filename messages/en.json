@@ -88,7 +88,8 @@
     "notifications": "Notifications",
     "noBaby": "No baby added yet",
     "addBaby": "Add baby",
-    "selectBaby": "Select baby"
+    "selectBaby": "Select baby",
+    "recommended": "Recommended"
   },
   "baby": {
     "profile": "Baby profile",
@@ -129,7 +130,9 @@
   "legal": {
     "general": "The information in this app is for informational and tracking purposes only and does not constitute medical advice. Every baby develops at their own pace. Please consult your pediatrician or lactation consultant for any medical or nutritional questions.",
     "feedingCalculator": "This calculation is for informational purposes only and does not constitute medical advice. Please follow your doctor's or lactation consultant's guidance.",
-    "ai": "AI does not replace medical advice."
+    "ai": "AI does not replace medical advice.",
+    "tastings": "Tasting lists and recommended order are for tracking only and are not medical or nutritional advice.",
+    "vaccinations": "The immunization schedule follows the Ministry of Health program for tracking only — it does not replace medical advice."
   },
   "landing": {
     "heroTitle": "Everything your baby needs",
@@ -165,5 +168,26 @@
     "dailyRecommended": "Daily recommended amount",
     "perMeal": "Per meal",
     "remainingToday": "Remaining today"
+  },
+  "vaccinations": {
+    "title": "Baby immunization schedule",
+    "subtitle": "Based on the Israeli Ministry of Health routine schedule. Tracking, reminders and notes — not medical advice.",
+    "mohLink": "Official MOH immunization schedule",
+    "progress": "{done} of {total} vaccines completed",
+    "nextVaccine": "Next vaccine in schedule",
+    "recommendedDate": "Recommended date",
+    "scheduledDate": "Scheduled appointment",
+    "completed": "Done",
+    "completedDate": "Date given",
+    "notes": "Notes",
+    "sideEffects": "Side effects",
+    "emailReminder": "Email me a reminder one day before the appointment",
+    "optional": "As directed",
+    "seasonal": "Seasonal",
+    "protects": "Protects against",
+    "where": "Where",
+    "vaccinesCount": "vaccines",
+    "markedDone": "Vaccine marked as done",
+    "disclaimer": "Information follows the MOH schedule and may change. Confirm with your well-baby clinic nurse before each vaccine."
   }
 }

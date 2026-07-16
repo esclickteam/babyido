@@ -11,6 +11,7 @@ interface HebrewDateInputProps {
   className?: string;
   id?: string;
   placeholder?: string;
+  disabled?: boolean;
 }
 
 export function HebrewDateInput({
@@ -19,6 +20,7 @@ export function HebrewDateInput({
   className,
   id,
   placeholder = "18/03/2026",
+  disabled,
 }: HebrewDateInputProps) {
   const fallbackId = useId();
   const inputId = id ?? fallbackId;
@@ -49,6 +51,7 @@ export function HebrewDateInput({
         autoComplete="off"
         placeholder={placeholder}
         value={text}
+        disabled={disabled}
         onChange={(e) => {
           setText(e.target.value);
           const iso = displayToIso(e.target.value);
@@ -63,6 +66,7 @@ export function HebrewDateInput({
       />
       <button
         type="button"
+        disabled={disabled}
         onClick={() => pickerRef.current?.showPicker?.()}
         className="absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
         aria-label="בחירת תאריך"
@@ -75,6 +79,7 @@ export function HebrewDateInput({
         tabIndex={-1}
         aria-hidden
         value={value}
+        disabled={disabled}
         onChange={(e) => {
           onChange(e.target.value);
           setText(isoToDisplay(e.target.value));
