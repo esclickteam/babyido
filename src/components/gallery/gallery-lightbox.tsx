@@ -109,7 +109,7 @@ export function GalleryLightbox({
       </header>
 
       <div
-        className="relative min-h-0 flex-1"
+        className="relative flex min-h-0 flex-1 items-center justify-center px-3 py-2 md:px-12 md:py-4"
         onTouchStart={(e) => {
           touchStartX.current = e.touches[0]?.clientX ?? 0;
         }}
@@ -123,21 +123,29 @@ export function GalleryLightbox({
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={current._id}
-            initial={{ opacity: 0, scale: 1.04 }}
+            initial={{ opacity: 0, scale: 1.02 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-0"
+            exit={{ opacity: 0, scale: 0.99 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="relative h-full w-full max-w-6xl"
           >
+            {/* Soft fill behind portrait photos on wide screens */}
+            <Image
+              src={current.photoUrl}
+              alt=""
+              fill
+              aria-hidden
+              className="scale-110 object-cover opacity-25 blur-2xl"
+              sizes="100vw"
+            />
             <Image
               src={current.photoUrl}
               alt={label}
               fill
-              className="object-cover"
-              sizes="100vw"
+              className="relative z-10 object-contain"
+              sizes="(max-width: 768px) 100vw, 1200px"
               priority
             />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#1a2218]/80 via-transparent to-[#1a2218]/25" />
           </motion.div>
         </AnimatePresence>
 
