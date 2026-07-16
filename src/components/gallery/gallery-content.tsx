@@ -28,7 +28,7 @@ export function GalleryContent() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
-  const [viewer, setViewer] = useState<{ slot: number; index: number } | null>(null);
+  const [viewer, setViewer] = useState<{ slot: number } | null>(null);
 
   const { data: photos = [], isLoading } = useGalleryPhotos(baby?._id ?? null);
   const upload = useUploadGalleryPhoto(baby?._id ?? null);
@@ -117,10 +117,10 @@ export function GalleryContent() {
     inputRef.current?.click();
   }
 
-  function openViewer(slot: number, index = 0) {
+  function openViewer(slot: number) {
     const slotPhotos = photosBySlot.get(slot);
     if (!slotPhotos?.length) return;
-    setViewer({ slot, index });
+    setViewer({ slot });
   }
 
   async function handleDeleteFromViewer(photo: GalleryPhoto) {
@@ -130,9 +130,6 @@ export function GalleryContent() {
       const remaining = (photosBySlot.get(photo.ageMonths) ?? []).filter((p) => p._id !== photo._id);
       if (remaining.length === 0) {
         setViewer(null);
-      } else if (viewer) {
-        const nextIndex = Math.min(viewer.index, remaining.length - 1);
-        setViewer({ slot: photo.ageMonths, index: nextIndex });
       }
     } catch {
       toast.error(tc("error"));
@@ -181,7 +178,7 @@ export function GalleryContent() {
               photos={photosBySlot.get(slot) ?? []}
               isBusy={uploadingSlot === slot}
               onUpload={() => openUpload(slot)}
-              onOpenViewer={(index) => openViewer(slot, index)}
+              onOpenViewer={() => openViewer(slot)}
             />
           ))}
         </div>
@@ -191,7 +188,6 @@ export function GalleryContent() {
 
       <GalleryLightbox
         photos={viewerPhotos}
-        initialIndex={viewer?.index ?? 0}
         label={viewerLabel}
         open={viewer !== null && viewerPhotos.length > 0}
         onClose={() => setViewer(null)}

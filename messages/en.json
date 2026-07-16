@@ -304,7 +304,7 @@
     "addPhoto": "Add photo",
     "saved": "Photo saved",
     "deleted": "Photo deleted",
-    "hint": "Swipe photos on each card · tap to enlarge · select multiple at once",
+    "hint": "Each card shows the first photo · tap to enlarge and swipe through all photos",
     "addMore": "Add another photo",
     "uploading": "Uploading...",
     "savedMany": "{count} photos saved",

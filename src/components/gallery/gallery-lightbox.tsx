@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 
 interface GalleryLightboxProps {
   photos: GalleryPhoto[];
-  initialIndex: number;
   label: string;
   open: boolean;
   onClose: () => void;
@@ -19,7 +18,6 @@ interface GalleryLightboxProps {
 
 export function GalleryLightbox({
   photos,
-  initialIndex,
   label,
   open,
   onClose,
@@ -28,12 +26,12 @@ export function GalleryLightbox({
 }: GalleryLightboxProps) {
   const t = useTranslations("gallery");
   const tc = useTranslations("common");
-  const [index, setIndex] = useState(initialIndex);
+  const [index, setIndex] = useState(0);
   const touchStartX = useRef(0);
 
   useEffect(() => {
-    if (open) setIndex(initialIndex);
-  }, [open, initialIndex]);
+    if (open) setIndex(0);
+  }, [open, photos]);
 
   const goPrev = useCallback(() => {
     setIndex((i) => (i > 0 ? i - 1 : photos.length - 1));
@@ -58,19 +56,19 @@ export function GalleryLightbox({
 
   if (!open || photos.length === 0) return null;
 
-  const current = photos[index];
+  const current = photos[index] ?? photos[0];
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex flex-col bg-black/95"
+      className="fixed inset-0 z-[100] flex flex-col bg-[#fef6f0]"
       role="dialog"
       aria-modal
       aria-label={label}
     >
-      <div className="flex items-center justify-between gap-3 px-4 py-3 text-white">
+      <div className="flex items-center justify-between gap-3 border-b border-rose-100 bg-white/90 px-4 py-3 text-[var(--ink)] backdrop-blur-sm">
         <div className="min-w-0">
           <p className="truncate text-sm font-bold">{label}</p>
-          <p className="text-xs text-white/70">
+          <p className="text-xs text-muted-foreground">
             {t("photoCounter", { current: index + 1, total: photos.length })}
           </p>
         </div>
@@ -79,7 +77,7 @@ export function GalleryLightbox({
             type="button"
             onClick={() => onDelete(current)}
             disabled={deleting}
-            className="flex size-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-red-500/80"
+            className="flex size-10 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition hover:bg-rose-100"
             aria-label={tc("delete")}
           >
             <Trash2 className="size-4" />
@@ -87,7 +85,7 @@ export function GalleryLightbox({
           <button
             type="button"
             onClick={onClose}
-            className="flex size-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+            className="flex size-10 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition hover:bg-rose-100"
             aria-label={t("closeViewer")}
           >
             <X className="size-5" />
@@ -96,7 +94,7 @@ export function GalleryLightbox({
       </div>
 
       <div
-        className="relative flex flex-1 items-center justify-center px-14 py-4"
+        className="relative flex min-h-0 flex-1 items-stretch justify-center"
         onTouchStart={(e) => {
           touchStartX.current = e.touches[0]?.clientX ?? 0;
         }}
@@ -111,21 +109,21 @@ export function GalleryLightbox({
           <button
             type="button"
             onClick={goPrev}
-            className="absolute right-3 top-1/2 z-10 flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition hover:bg-white/25"
+            className="absolute right-3 top-1/2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-rose-800 shadow-md"
             aria-label={t("prevPhoto")}
           >
-            <ChevronRight className="size-7" />
+            <ChevronRight className="size-6" />
           </button>
         )}
 
-        <div className="relative h-full w-full max-h-[75vh] max-w-3xl">
+        <div className="relative h-full w-full">
           <Image
             key={current._id}
             src={current.photoUrl}
             alt={label}
             fill
-            className="object-contain"
-            sizes="(max-width: 768px) 100vw, 768px"
+            className="object-cover"
+            sizes="100vw"
             priority
           />
         </div>
@@ -134,24 +132,24 @@ export function GalleryLightbox({
           <button
             type="button"
             onClick={goNext}
-            className="absolute left-3 top-1/2 z-10 flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition hover:bg-white/25"
+            className="absolute left-3 top-1/2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-rose-800 shadow-md"
             aria-label={t("nextPhoto")}
           >
-            <ChevronLeft className="size-7" />
+            <ChevronLeft className="size-6" />
           </button>
         )}
       </div>
 
       {photos.length > 1 && (
-        <div className="flex justify-center gap-1.5 px-4 pb-6">
+        <div className="flex justify-center gap-1.5 border-t border-rose-100 bg-white/90 px-4 py-4">
           {photos.map((photo, i) => (
             <button
               key={photo._id}
               type="button"
               onClick={() => setIndex(i)}
               className={cn(
-                "size-2 rounded-full transition",
-                i === index ? "bg-white" : "bg-white/35 hover:bg-white/60"
+                "h-2 rounded-full transition",
+                i === index ? "w-5 bg-rose-500" : "w-2 bg-rose-200 hover:bg-rose-300"
               )}
               aria-label={t("photoCounter", { current: i + 1, total: photos.length })}
             />
