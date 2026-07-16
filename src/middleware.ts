@@ -1,7 +1,5 @@
 import createMiddleware from "next-intl/middleware";
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth/config";
-import { getAuthUserId } from "@/lib/auth/session-user";
+import { NextRequest, NextResponse } from "next/server";
 import { routing } from "./i18n/routing";
 
 const intlMiddleware = createMiddleware(routing);
@@ -16,7 +14,7 @@ function stripLegacyLocalePrefix(pathname: string): string | null {
   return null;
 }
 
-export default auth((request) => {
+export default function middleware(request: NextRequest) {
   const stripped = stripLegacyLocalePrefix(request.nextUrl.pathname);
 
   if (stripped) {
@@ -25,15 +23,8 @@ export default auth((request) => {
     return NextResponse.redirect(url, 308);
   }
 
-  const userId = getAuthUserId(request.auth);
-  const { pathname } = request.nextUrl;
-
-  if (userId && (pathname === "/" || pathname === "/login" || pathname === "/register")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
   return intlMiddleware(request);
-});
+}
 
 export const config = {
   matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
