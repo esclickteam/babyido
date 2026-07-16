@@ -8,75 +8,199 @@ export interface FoodItem {
   fromMonth: number;
   isAllergen?: boolean;
   emoji: string;
-  /** 1-based step in recommended first-tasting order */
   orderIndex?: number;
 }
 
-/** סדר טעימות ראשונות מומלץ — מאכל אחד בכל פעם */
-export const TASTING_ORDER: FoodItem[] = [
-  { id: "rice", nameHe: "אורז לתינוקות", nameEn: "Baby rice", category: "grains", fromMonth: 4, emoji: "🍚" },
-  { id: "carrot", nameHe: "גזר", nameEn: "Carrot", category: "vegetables", fromMonth: 4, emoji: "🥕" },
-  { id: "pumpkin", nameHe: "דלעת", nameEn: "Pumpkin", category: "vegetables", fromMonth: 4, emoji: "🎃" },
-  { id: "sweet-potato", nameHe: "בטטה", nameEn: "Sweet potato", category: "vegetables", fromMonth: 4, emoji: "🍠" },
-  { id: "zucchini", nameHe: "קישוא", nameEn: "Zucchini", category: "vegetables", fromMonth: 5, emoji: "🥒" },
-  { id: "apple", nameHe: "תפוח", nameEn: "Apple", category: "fruits", fromMonth: 5, emoji: "🍎" },
-  { id: "pear", nameHe: "אגס", nameEn: "Pear", category: "fruits", fromMonth: 5, emoji: "🍐" },
-  { id: "banana", nameHe: "בננה", nameEn: "Banana", category: "fruits", fromMonth: 5, emoji: "🍌" },
-  { id: "chicken", nameHe: "עוף", nameEn: "Chicken", category: "meats", fromMonth: 6, emoji: "🍗" },
-  { id: "egg", nameHe: "ביצה", nameEn: "Egg", category: "allergens", fromMonth: 6, isAllergen: true, emoji: "🥚" },
-  { id: "yogurt", nameHe: "יוגורט", nameEn: "Yogurt", category: "dairy", fromMonth: 6, emoji: "🥛" },
-  { id: "lentils", nameHe: "עדשים", nameEn: "Lentils", category: "legumes", fromMonth: 6, emoji: "🫘" },
-  { id: "avocado", nameHe: "אבוקדו", nameEn: "Avocado", category: "fruits", fromMonth: 6, emoji: "🥑" },
-  { id: "salmon", nameHe: "סלמון", nameEn: "Salmon", category: "fish", fromMonth: 7, emoji: "🐟" },
-  { id: "peanut", nameHe: "חמאת בוטנים", nameEn: "Peanut butter", category: "allergens", fromMonth: 7, isAllergen: true, emoji: "🥜" },
-  { id: "beef", nameHe: "בקר", nameEn: "Beef", category: "meats", fromMonth: 7, emoji: "🥩" },
+export interface TastingPhase {
+  id: number;
+  titleHe: string;
+  subtitleHe: string;
+  fromMonth: number;
+  foods: FoodItem[];
+}
+
+function food(
+  id: string,
+  nameHe: string,
+  nameEn: string,
+  category: FoodCategory,
+  fromMonth: number,
+  emoji: string,
+  isAllergen?: boolean
+): FoodItem {
+  return { id, nameHe, nameEn, category, fromMonth, emoji, isAllergen };
+}
+
+/** 9 שלבי הכרת מזון מומלצים */
+export const TASTING_PHASES: TastingPhase[] = [
+  {
+    id: 1,
+    titleHe: "טעימות ראשונות",
+    subtitleHe: "5–10 ימים לכל מאכל · מאכל אחד בכל פעם",
+    fromMonth: 4,
+    foods: [
+      food("sweet-potato", "בטטה", "Sweet potato", "vegetables", 4, "🍠"),
+      food("zucchini", "קישוא", "Zucchini", "vegetables", 4, "🥒"),
+      food("carrot", "גזר", "Carrot", "vegetables", 4, "🥕"),
+      food("pumpkin", "דלעת", "Pumpkin", "vegetables", 4, "🎃"),
+      food("avocado", "אבוקדו", "Avocado", "fruits", 4, "🥑"),
+    ],
+  },
+  {
+    id: 2,
+    titleHe: "פירות ראשונים",
+    subtitleHe: "פירות מבושלים או רכים",
+    fromMonth: 5,
+    foods: [
+      food("pear", "אגס", "Pear", "fruits", 5, "🍐"),
+      food("apple-cooked", "תפוח מבושל", "Cooked apple", "fruits", 5, "🍎"),
+      food("banana", "בננה", "Banana", "fruits", 5, "🍌"),
+      food("peach", "אפרסק", "Peach", "fruits", 5, "🍑"),
+      food("mango", "מנגו", "Mango", "fruits", 5, "🥭"),
+    ],
+  },
+  {
+    id: 3,
+    titleHe: "ירקות נוספים",
+    subtitleHe: "גיוון ירקות לפי סבלנות התינוק",
+    fromMonth: 6,
+    foods: [
+      food("potato", "תפוח אדמה", "Potato", "vegetables", 6, "🥔"),
+      food("broccoli", "ברוקולי", "Broccoli", "vegetables", 6, "🥦"),
+      food("cauliflower", "כרובית", "Cauliflower", "vegetables", 6, "🥦"),
+      food("peas", "אפונה", "Peas", "vegetables", 6, "🫛"),
+      food("green-beans", "שעועית ירוקה", "Green beans", "vegetables", 6, "🫛"),
+      food("beet", "סלק", "Beet", "vegetables", 6, "🫜"),
+      food("corn", "תירס", "Corn", "vegetables", 7, "🌽"),
+    ],
+  },
+  {
+    id: 4,
+    titleHe: "דגנים",
+    subtitleHe: "לרוב מגיל 6–7 חודשים · אורז לא בהכרח ראשון",
+    fromMonth: 6,
+    foods: [
+      food("oatmeal", "שיבולת שועל", "Oatmeal", "grains", 6, "🥣"),
+      food("rice", "אורז", "Rice", "grains", 6, "🍚"),
+      food("quinoa", "קינואה", "Quinoa", "grains", 7, "🌾"),
+      food("buckwheat", "כוסמת", "Buckwheat", "grains", 7, "🌾"),
+      food("couscous", "קוסקוס", "Couscous", "grains", 7, "🍚"),
+      food("soft-pasta", "פסטה רכה", "Soft pasta", "grains", 8, "🍝"),
+    ],
+  },
+  {
+    id: 5,
+    titleHe: "קטניות",
+    subtitleHe: "מקור חלבון צמחי",
+    fromMonth: 7,
+    foods: [
+      food("red-lentils", "עדשים אדומות", "Red lentils", "legumes", 7, "🫘"),
+      food("chickpeas", "חומוס", "Chickpeas", "legumes", 7, "🫘"),
+      food("white-beans", "שעועית לבנה", "White beans", "legumes", 7, "🫘"),
+      food("green-lentils", "עדשים ירוקות", "Green lentils", "legumes", 7, "🫘"),
+      food("dry-peas", "אפונה יבשה", "Dry peas", "legumes", 7, "🫛"),
+    ],
+  },
+  {
+    id: 6,
+    titleHe: "חלבונים",
+    subtitleHe: "עוף, דגים וביצה",
+    fromMonth: 7,
+    foods: [
+      food("chicken", "עוף", "Chicken", "meats", 7, "🍗"),
+      food("turkey", "הודו", "Turkey", "meats", 7, "🦃"),
+      food("beef", "בקר", "Beef", "meats", 7, "🥩"),
+      food("egg", "ביצה", "Egg", "allergens", 7, "🥚", true),
+      food("salmon", "סלמון", "Salmon", "fish", 7, "🐟"),
+      food("tilapia", "אמנון", "Tilapia", "fish", 8, "🐟"),
+      food("cod", "בקלה", "Cod", "fish", 8, "🐟"),
+    ],
+  },
+  {
+    id: 7,
+    titleHe: "מוצרי חלב",
+    subtitleHe: "לא לפני גיל 8 חודשים ככלל",
+    fromMonth: 8,
+    foods: [
+      food("yogurt-plain", "יוגורט טבעי", "Plain yogurt", "dairy", 8, "🥛"),
+      food("white-cheese", "גבינה לבנה", "White cheese", "dairy", 8, "🧀"),
+      food("cottage", "קוטג'", "Cottage cheese", "dairy", 8, "🧀"),
+      food("ricotta", "ריקוטה", "Ricotta", "dairy", 8, "🧀"),
+    ],
+  },
+  {
+    id: 8,
+    titleHe: "אלרגנים",
+    subtitleHe: "במרקם בטוח ובהדרגה · בכל ספק פנו לרופא",
+    fromMonth: 6,
+    foods: [
+      food("egg", "ביצה", "Egg", "allergens", 6, "🥚", true),
+      food("tahini", "טחינה", "Tahini", "allergens", 7, "🫘", true),
+      food("peanut-diluted", "חמאת בוטנים מדוללת", "Diluted peanut butter", "allergens", 7, "🥜", true),
+      food("dairy-allergen", "מוצרי חלב", "Dairy products", "dairy", 8, "🥛"),
+      food("fish-allergen", "דגים", "Fish", "fish", 7, "🐟"),
+      food("wheat", "חיטה", "Wheat", "grains", 8, "🌾", true),
+      food("soy", "סויה", "Soy", "allergens", 8, "🫘", true),
+    ],
+  },
+  {
+    id: 9,
+    titleHe: "מעבר למרקמים",
+    subtitleHe: "התקדמות במרקם — לא חובה לפי סדר קשיח",
+    fromMonth: 8,
+    foods: [
+      food("texture-smooth", "מחית חלקה", "Smooth puree", "grains", 4, "🥄"),
+      food("texture-thick", "מחית גסה", "Thick puree", "grains", 6, "🥣"),
+      food("texture-soft", "חתיכות רכות", "Soft pieces", "grains", 8, "🍽️"),
+      food("texture-finger", "מזון אצבע", "Finger food", "grains", 9, "👆"),
+      food("texture-self", "אכילה עצמאית", "Self feeding", "grains", 10, "👶"),
+    ],
+  },
 ];
 
-const ORDERED_IDS = new Set(TASTING_ORDER.map((f) => f.id));
+/** Flat ordered list for progress tracking (unique ids, first occurrence wins) */
+export const ORDERED_FOODS: FoodItem[] = (() => {
+  const seen = new Set<string>();
+  const list: FoodItem[] = [];
+  let index = 1;
+  for (const phase of TASTING_PHASES) {
+    for (const item of phase.foods) {
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      list.push({ ...item, orderIndex: index++ });
+    }
+  }
+  return list;
+})();
 
-/** מאכלים נוספים לחיפוש (מחוץ לסדר המומלץ) */
+export const TASTING_ORDER = ORDERED_FOODS;
+
+const CATALOG_IDS = new Set(ORDERED_FOODS.map((f) => f.id));
+
 const EXTRA_FOODS: FoodItem[] = [
-  { id: "potato", nameHe: "תפוח אדמה", nameEn: "Potato", category: "vegetables", fromMonth: 5, emoji: "🥔" },
-  { id: "cauliflower", nameHe: "כרובית", nameEn: "Cauliflower", category: "vegetables", fromMonth: 6, emoji: "🥦" },
-  { id: "broccoli", nameHe: "ברוקולי", nameEn: "Broccoli", category: "vegetables", fromMonth: 6, emoji: "🥦" },
-  { id: "peas", nameHe: "אפונה", nameEn: "Peas", category: "vegetables", fromMonth: 6, emoji: "🫛" },
-  { id: "green-beans", nameHe: "שעועית ירוקה", nameEn: "Green beans", category: "vegetables", fromMonth: 6, emoji: "🫛" },
-  { id: "beet", nameHe: "סלק", nameEn: "Beet", category: "vegetables", fromMonth: 6, emoji: "🫜" },
-  { id: "cucumber", nameHe: "מלפפון", nameEn: "Cucumber", category: "vegetables", fromMonth: 6, emoji: "🥒" },
-  { id: "peach", nameHe: "אפרסק", nameEn: "Peach", category: "fruits", fromMonth: 5, emoji: "🍑" },
-  { id: "apricot", nameHe: "משמש", nameEn: "Apricot", category: "fruits", fromMonth: 5, emoji: "🍑" },
-  { id: "mango", nameHe: "מנגו", nameEn: "Mango", category: "fruits", fromMonth: 6, emoji: "🥭" },
-  { id: "plum", nameHe: "שזיף", nameEn: "Plum", category: "fruits", fromMonth: 6, emoji: "🍑" },
-  { id: "strawberry", nameHe: "תות", nameEn: "Strawberry", category: "fruits", fromMonth: 8, emoji: "🍓" },
-  { id: "kiwi", nameHe: "קיוי", nameEn: "Kiwi", category: "fruits", fromMonth: 8, emoji: "🥝" },
-  { id: "oatmeal", nameHe: "שיבולת שועל", nameEn: "Oatmeal", category: "grains", fromMonth: 6, emoji: "🥣" },
-  { id: "pasta", nameHe: "פסטה", nameEn: "Pasta", category: "grains", fromMonth: 8, emoji: "🍝" },
-  { id: "bread", nameHe: "לחם / חלה", nameEn: "Bread", category: "grains", fromMonth: 7, emoji: "🍞" },
-  { id: "quinoa", nameHe: "קינואה", nameEn: "Quinoa", category: "grains", fromMonth: 8, emoji: "🌾" },
-  { id: "turkey", nameHe: "הודו", nameEn: "Turkey", category: "meats", fromMonth: 7, emoji: "🦃" },
-  { id: "tuna", nameHe: "טונה", nameEn: "Tuna", category: "fish", fromMonth: 8, emoji: "🐟" },
-  { id: "cottage-cheese", nameHe: "גבינה לבנה", nameEn: "Cottage cheese", category: "dairy", fromMonth: 8, emoji: "🧀" },
-  { id: "hard-cheese", nameHe: "גבינה צהובה", nameEn: "Hard cheese", category: "dairy", fromMonth: 8, emoji: "🧀" },
-  { id: "tahini", nameHe: "טחינה", nameEn: "Tahini", category: "allergens", fromMonth: 7, isAllergen: true, emoji: "🫘" },
-  { id: "sesame", nameHe: "שומשום", nameEn: "Sesame", category: "allergens", fromMonth: 7, isAllergen: true, emoji: "🫘" },
-  { id: "soy", nameHe: "סויה", nameEn: "Soy", category: "allergens", fromMonth: 8, isAllergen: true, emoji: "🫘" },
-  { id: "almond", nameHe: "שקדים", nameEn: "Almond", category: "allergens", fromMonth: 8, isAllergen: true, emoji: "🌰" },
-  { id: "chickpeas", nameHe: "חומוס", nameEn: "Chickpeas", category: "legumes", fromMonth: 7, emoji: "🫘" },
-  { id: "white-beans", nameHe: "שעועית לבנה", nameEn: "White beans", category: "legumes", fromMonth: 7, emoji: "🫘" },
+  food("apple", "תפוח", "Apple", "fruits", 5, "🍎"),
+  food("apricot", "משמש", "Apricot", "fruits", 5, "🍑"),
+  food("plum", "שזיף", "Plum", "fruits", 6, "🍑"),
+  food("strawberry", "תות", "Strawberry", "fruits", 8, "🍓"),
+  food("kiwi", "קיוי", "Kiwi", "fruits", 8, "🥝"),
+  food("cucumber", "מלפפון", "Cucumber", "vegetables", 6, "🥒"),
+  food("lentils", "עדשים", "Lentils", "legumes", 6, "🫘"),
+  food("tuna", "טונה", "Tuna", "fish", 8, "🐟"),
+  food("bread", "לחם / חלה", "Bread", "grains", 7, "🍞"),
+  food("almond", "שקדים", "Almond", "allergens", 8, "🌰", true),
 ];
-
-export const ORDERED_FOODS: FoodItem[] = TASTING_ORDER.map((food, index) => ({
-  ...food,
-  orderIndex: index + 1,
-}));
 
 export const FOOD_CATALOG: FoodItem[] = [
   ...ORDERED_FOODS,
-  ...EXTRA_FOODS.filter((f) => !ORDERED_IDS.has(f.id)),
+  ...EXTRA_FOODS.filter((f) => !CATALOG_IDS.has(f.id)),
 ];
 
 export function getFoodById(id: string): FoodItem | undefined {
-  return FOOD_CATALOG.find((f) => f.id === id);
+  return FOOD_CATALOG.find((f) => f.id === id) ?? TASTING_PHASES.flatMap((p) => p.foods).find((f) => f.id === id);
+}
+
+export function getPhaseForFood(foodId: string): TastingPhase | undefined {
+  return TASTING_PHASES.find((phase) => phase.foods.some((f) => f.id === foodId));
 }
 
 export function isOrderedFood(food: FoodItem): boolean {

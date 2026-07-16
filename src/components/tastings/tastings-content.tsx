@@ -1,16 +1,28 @@
 "use client";
 
-import { Check, Plus, Search, Sparkles, Trash2, UtensilsCrossed } from "lucide-react";
+import { Search, Sparkles, Trash2, UtensilsCrossed } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { FOOD_CATEGORIES, type FoodCategory, type TastingReaction } from "@/constants/feeding";
-import { ORDERED_FOODS, TASTING_ORDER, type FoodItem } from "@/constants/tastings";
+import {
+  ORDERED_FOODS,
+  TASTING_ORDER,
+  TASTING_PHASES,
+  type FoodItem,
+} from "@/constants/tastings";
 import { useCreateTasting, useDeleteTasting, useTastings } from "@/hooks/use-tastings";
 import { useBabyStore } from "@/stores/baby-store";
 import { formatDate, getTodayLocal } from "@/utils/date";
 import { getBabyAgeInMonths } from "@/utils/age";
+import {
+  findNextRecommendedFoodId,
+  FOOD_STATUS_META,
+  getFoodStatus,
+  getTastingsByFoodId,
+  type FoodStatus,
+} from "@/utils/tasting-status";
 import type { Locale } from "@/types";
 import { HebrewDateInput } from "@/components/shared/hebrew-date-input";
 import { IdoButton } from "@/components/idoland/ido-button";
@@ -18,6 +30,7 @@ import { IdoPanel } from "@/components/idoland/ido-panel";
 import { LegalDisclaimer } from "@/components/shared/legal-disclaimer";
 import { NoBabyPrompt } from "@/components/shared/no-baby-prompt";
 import { TastingFoodSearch } from "@/components/tastings/tasting-food-search";
+import { TastingPhaseSection } from "@/components/tastings/tasting-phase-section";
 import { TastingReactionFields } from "@/components/tastings/tasting-reaction-fields";
 import { Label } from "@/components/ui/label";
 import {
@@ -80,17 +93,49 @@ export function TastingsContent() {
     [tastings]
   );
 
+  const tastingsByFood = useMemo(
+    () => getTastingsByFoodId(tastings ?? []),
+    [tastings]
+  );
+
+  const nextRecommendedId = useMemo(
+    () => findNextRecommendedFoodId(babyAgeMonths, tastingsByFood),
+    [babyAgeMonths, tastingsByFood]
+  );
+
   const orderedProgress = useMemo(
     () => ORDERED_FOODS.filter((food) => tastedFoodIds.has(food.id)).length,
     [tastedFoodIds]
   );
 
   const nextRecommended = useMemo(
-    () => ORDERED_FOODS.find((food) => !tastedFoodIds.has(food.id)),
-    [tastedFoodIds]
+    () => ORDERED_FOODS.find((food) => food.id === nextRecommendedId) ?? null,
+    [nextRecommendedId]
   );
 
   const progressPercent = Math.round((orderedProgress / TASTING_ORDER.length) * 100);
+
+  const statusLabel = (status: FoodStatus) => t(`status.${status}`);
+
+  function openFood(food: FoodItem) {
+    const entry = tastingsByFood.get(food.id);
+    const status = getFoodStatus(food.id, food.fromMonth, babyAgeMonths, entry, nextRecommendedId);
+    if (status === "too_early") return;
+    setLogTarget({ kind: food.orderIndex ? "ordered" : "catalog", food });
+    setReactions([]);
+    setNotes("");
+    setTastedDate(getTodayLocal());
+    setTab("recommended");
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  }
+
+  function openCustomFood(name: string) {
+    setLogTarget({ kind: "custom", name, category: "vegetables" });
+    setReactions([]);
+    setNotes("");
+    setTastedDate(getTodayLocal());
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   if (!baby) return <NoBabyPrompt />;
 
@@ -107,32 +152,8 @@ export function TastingsContent() {
     setTastedDate(getTodayLocal());
   }
 
-  function openOrderedFood(food: FoodItem) {
-    setLogTarget({ kind: "ordered", food });
-    setReactions([]);
-    setNotes("");
-    setTastedDate(getTodayLocal());
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
   function openCatalogFood(food: FoodItem) {
-    if (food.orderIndex) {
-      openOrderedFood(food);
-      return;
-    }
-    setLogTarget({ kind: "catalog", food });
-    setReactions([]);
-    setNotes("");
-    setTastedDate(getTodayLocal());
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function openCustomFood(name: string) {
-    setLogTarget({ kind: "custom", name, category: "vegetables" });
-    setReactions([]);
-    setNotes("");
-    setTastedDate(getTodayLocal());
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    openFood(food);
   }
 
   async function handleSave() {
@@ -239,79 +260,83 @@ export function TastingsContent() {
       </div>
 
       {nextRecommended && tab === "recommended" && (
-        <IdoPanel className="flex flex-col items-stretch gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
-          <span className="text-3xl">{nextRecommended.emoji}</span>
-          <div className="flex-1">
-            <p className="text-sm text-muted-foreground">{t("nextSuggested")}</p>
-            <p className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--grass-deep)]">
-              {t("stepFood", {
-                step: nextRecommended.orderIndex ?? 0,
-                food: nextRecommended.nameHe,
-              })}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {t("fromMonth", { month: nextRecommended.fromMonth })}
-              {nextRecommended.isAllergen && ` · ${t("allergen")}`}
-            </p>
+        <IdoPanel className="relative overflow-hidden border-[var(--coral)]/40 bg-gradient-to-l from-[#fff6f0] via-white to-[#f0faf4] p-5 sm:p-6">
+          <div className="absolute -left-6 -top-6 size-24 rounded-full bg-[var(--coral)]/10 blur-2xl" />
+          <div className="relative flex flex-col items-stretch gap-4 sm:flex-row sm:items-center">
+            <span className="text-5xl">{nextRecommended.emoji}</span>
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-semibold text-[var(--coral)]">{t("nextSuggested")}</p>
+              <p className="font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--grass-deep)]">
+                {nextRecommended.nameHe}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {t("stepFood", {
+                  step: nextRecommended.orderIndex ?? 0,
+                  food: nextRecommended.nameHe,
+                })}
+                {" · "}
+                {t("fromMonth", { month: nextRecommended.fromMonth })}
+              </p>
+            </div>
+            <IdoButton onClick={() => openFood(nextRecommended)} className="shrink-0">
+              {t("logTasting")}
+            </IdoButton>
           </div>
-          <IdoButton onClick={() => openOrderedFood(nextRecommended)}>{t("logTasting")}</IdoButton>
         </IdoPanel>
       )}
 
       {tab === "recommended" && (
-        <IdoPanel className="space-y-4 p-5 sm:p-6">
-          <SectionTitle>{t("recommendedOrder")}</SectionTitle>
-          <p className="text-sm text-muted-foreground">{t("orderHint")}</p>
+        <div className="space-y-4">
+          <IdoPanel className="space-y-3 p-4 sm:p-5">
+            <SectionTitle>{t("statusLegend")}</SectionTitle>
+            <div className="flex flex-wrap gap-2">
+              {(
+                [
+                  "too_early",
+                  "recommended_now",
+                  "tasted",
+                  "loved",
+                  "neutral",
+                  "try_again",
+                  "had_reaction",
+                ] as FoodStatus[]
+              ).map((status) => (
+                <span
+                  key={status}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold",
+                    FOOD_STATUS_META[status].bgClass,
+                    FOOD_STATUS_META[status].colorClass
+                  )}
+                >
+                  {FOOD_STATUS_META[status].icon} {statusLabel(status)}
+                </span>
+              ))}
+            </div>
+            <p className="text-sm text-muted-foreground">{t("orderHint")}</p>
+          </IdoPanel>
 
-          <ul className="space-y-2">
-            {ORDERED_FOODS.map((food) => {
-              const done = tastedFoodIds.has(food.id);
-              const isNext = nextRecommended?.id === food.id;
-              const ageOk = babyAgeMonths >= food.fromMonth;
-
-              return (
-                <li key={food.id}>
-                  <button
-                    type="button"
-                    onClick={() => !done && openOrderedFood(food)}
-                    disabled={done}
-                    className={cn(
-                      "flex w-full items-center gap-3 rounded-2xl border p-4 text-right transition",
-                      done
-                        ? "border-[var(--grass)]/30 bg-[var(--grass)]/10 opacity-90"
-                        : isNext
-                          ? "border-[var(--coral)] bg-white shadow-md"
-                          : "border-[var(--stroke)] bg-white/80 hover:bg-white",
-                      !ageOk && !done && "opacity-60"
-                    )}
-                  >
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold">
-                      {done ? <Check className="size-4 text-[var(--grass-deep)]" /> : food.orderIndex}
-                    </span>
-                    <span className="text-2xl">{food.emoji}</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold">{food.nameHe}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {t("fromMonth", { month: food.fromMonth })}
-                        {food.isAllergen && ` · ${t("allergen")}`}
-                        {!ageOk && !done && ` · ${t("waitAge")}`}
-                      </p>
-                    </div>
-                    {done && (
-                      <span className="shrink-0 rounded-full bg-[var(--grass)]/20 px-2 py-0.5 text-xs font-semibold text-[var(--grass-deep)]">
-                        {t("done")}
-                      </span>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </IdoPanel>
+          {TASTING_PHASES.map((phase) => (
+            <TastingPhaseSection
+              key={phase.id}
+              phase={phase}
+              babyAgeMonths={babyAgeMonths}
+              tastings={tastings ?? []}
+              defaultOpen={
+                phase.id === 1 ||
+                phase.foods.some((food) => food.id === nextRecommendedId)
+              }
+              getStatusLabel={statusLabel}
+              fromMonthLabel={(month) => t("fromMonth", { month })}
+              triedInPhaseLabel={(done, total) => t("triedInPhase", { done, total })}
+              onFoodClick={openFood}
+            />
+          ))}
+        </div>
       )}
 
       {tab === "search" && (
-        <div ref={formRef} className="space-y-4">
+        <div className="space-y-4">
           <IdoPanel className="space-y-4 p-5 sm:p-6">
             <SectionTitle>{t("searchAndAdd")}</SectionTitle>
             <p className="text-sm text-muted-foreground">{t("searchHint")}</p>
@@ -333,6 +358,7 @@ export function TastingsContent() {
       )}
 
       {logTarget && (
+        <div ref={formRef}>
         <IdoPanel className="space-y-5 p-5 sm:p-6">
           <SectionTitle>
             {t("logFood")}: {logTitle}
@@ -393,6 +419,7 @@ export function TastingsContent() {
             </IdoButton>
           </div>
         </IdoPanel>
+        </div>
       )}
 
       {tab === "history" && (
@@ -408,11 +435,22 @@ export function TastingsContent() {
             <p className="text-center text-muted-foreground">{tc("noData")}</p>
           ) : (
             <ul className="space-y-3">
-              {tastings.map((item) => (
+              {tastings.map((item) => {
+                const status = getFoodStatus(
+                  item.foodId ?? item.foodName,
+                  0,
+                  babyAgeMonths,
+                  item,
+                  null
+                );
+                const meta = FOOD_STATUS_META[status];
+
+                return (
                 <li
                   key={item._id}
                   className="flex items-center gap-3 rounded-2xl border border-[var(--stroke)] bg-white/80 p-4 shadow-sm"
                 >
+                  <span className="text-xl" aria-hidden>{meta.icon}</span>
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold">
                       {item.foodName}
@@ -439,7 +477,8 @@ export function TastingsContent() {
                     <Trash2 className="size-4" />
                   </button>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </IdoPanel>
