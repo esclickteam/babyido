@@ -17,6 +17,7 @@ import {
   Sparkles,
   Stethoscope,
   Syringe,
+  Timer,
   Utensils,
   UtensilsCrossed,
 } from "lucide-react";
@@ -30,6 +31,7 @@ export const NAV_ITEMS = [
   { key: "tastings", href: "/dashboard/tastings", icon: UtensilsCrossed },
   { key: "foodCombinations", href: "/dashboard/tastings/combinations", icon: Sparkles },
   { key: "milestones", href: "/dashboard/milestones", icon: Calendar },
+  { key: "tummyTime", href: "/dashboard/tummy-time", icon: Timer },
   { key: "sleep", href: "/dashboard/sleep", icon: Moon },
   { key: "vaccinations", href: "/dashboard/vaccinations", icon: Syringe },
   { key: "wellBaby", href: "/dashboard/well-baby", icon: Stethoscope },

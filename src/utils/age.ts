@@ -69,7 +69,7 @@ function joinAgeParts(parts: string[], locale: Locale): string {
   return locale === "he" ? `${rest} ו-${last}` : `${rest}, and ${last}`;
 }
 
-function formatAgeParts({ months, weeks, days }: BabyAgeParts, locale: Locale): string {
+export function formatAgeParts({ months, weeks, days }: BabyAgeParts, locale: Locale): string {
   if (locale === "he") {
     const parts: string[] = [];
 

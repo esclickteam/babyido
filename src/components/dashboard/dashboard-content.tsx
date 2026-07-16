@@ -14,6 +14,7 @@ import { formatShortDate } from "@/utils/date";
 import type { DashboardStats, Locale } from "@/types";
 import { DashboardFeedingSection } from "@/components/dashboard/dashboard-feeding-section";
 import { DashboardSleepSection } from "@/components/dashboard/dashboard-sleep-section";
+import { DashboardTummyTimeSection } from "@/components/dashboard/dashboard-tummy-time-section";
 
 interface DashboardContentProps {
   initialStats?: DashboardStats | null;
@@ -88,6 +89,8 @@ export function DashboardContent({ initialStats, selectedBabyId }: DashboardCont
 
       <DashboardSleepSection babyId={baby._id} />
 
+      <DashboardTummyTimeSection babyId={baby._id} />
+
       {showStatsSkeleton ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 7 }).map((_, i) => (
@@ -126,8 +129,18 @@ export function DashboardContent({ initialStats, selectedBabyId }: DashboardCont
           />
           <StatCard
             label={t("lastMilestone")}
-            value={stats?.lastMilestone?.type ?? "—"}
+            value={stats?.lastMilestone?.titleHe ?? "—"}
+            subValue={
+              stats?.lastMilestone?.date
+                ? formatShortDate(stats.lastMilestone.date, locale)
+                : undefined
+            }
             icon={<Sparkles className="size-4" />}
+          />
+          <StatCard
+            label={t("todayTummyTime")}
+            value={minutesToHoursMinutes(stats?.todayTummyTimeMinutes ?? 0, locale)}
+            icon={<Baby className="size-4" />}
           />
           <StatCard
             label={t("nextVaccination")}

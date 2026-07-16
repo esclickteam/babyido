@@ -113,6 +113,37 @@ export const vaccinationRecordSchema = z.object({
 
 export type VaccinationRecordInput = z.infer<typeof vaccinationRecordSchema>;
 
+export const tummyTimeStartSchema = z.object({
+  babyId: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().min(1),
+  notes: z.string().max(500).optional(),
+});
+
+export const tummyTimeEndSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().min(1),
+});
+
+export const tummyTimeManualSchema = z.object({
+  babyId: z.string().min(1),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  startTime: z.string().min(1),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  endTime: z.string().min(1),
+  notes: z.string().max(500).optional(),
+});
+
+export const milestoneRecordSchema = z.object({
+  babyId: z.string().min(1),
+  milestoneId: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  photoUrl: z.string().url().optional().nullable().or(z.literal("")),
+  videoUrl: z.string().url().optional().nullable().or(z.literal("")),
+  notes: z.string().max(2000).optional(),
+  completed: z.boolean().optional(),
+});
+
 export const numberField = {
   setValueAs: (value: string) => (value === "" ? undefined : Number(value)),
 };

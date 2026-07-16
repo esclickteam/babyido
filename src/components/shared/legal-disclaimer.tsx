@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 interface LegalDisclaimerProps {
-  variant?: "general" | "feedingCalculator" | "ai" | "tastings" | "vaccinations";
+  variant?: "general" | "feedingCalculator" | "ai" | "tastings" | "vaccinations" | "milestones";
   className?: string;
 }
 

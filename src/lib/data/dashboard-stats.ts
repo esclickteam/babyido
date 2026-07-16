@@ -1,10 +1,20 @@
 import { connectDB } from "@/lib/db/mongodb";
 import { VACCINE_SCHEDULE, getVaccineById } from "@/constants/vaccinations";
+import { getMilestoneById } from "@/constants/milestones";
 import { calculateDailyFormulaAmount } from "@/utils/age";
 import { getFeedingDayRange, getTodayIsrael, toDateOnlyString } from "@/utils/date";
 import { sleepDurationMinutes } from "@/utils/sleep";
 import { getRecommendedVaccineDate } from "@/utils/vaccination-schedule";
-import { Baby, FeedingEntry, GrowthMeasurement, Milestone, SleepEntry, TastingEntry, VaccinationRecord } from "@/models";
+import {
+  Baby,
+  FeedingEntry,
+  GrowthMeasurement,
+  Milestone,
+  SleepEntry,
+  TastingEntry,
+  TummyTimeEntry,
+  VaccinationRecord,
+} from "@/models";
 import type { DashboardStats } from "@/types";
 
 export async function getDashboardStats(
@@ -21,7 +31,7 @@ export async function getDashboardStats(
   const { start: feedingDayStart, end: feedingDayEnd } = getFeedingDayRange(dayKey);
   const { start: sleepDayStart, end: sleepDayEnd } = getFeedingDayRange(dayKey);
 
-  const [lastGrowth, todayFeedings, todaySleep, lastMilestone, lastTasting, vaccinationRecords] =
+  const [lastGrowth, todayFeedings, todaySleep, todayTummy, lastMilestone, lastTasting, vaccinationRecords] =
     await Promise.all([
     GrowthMeasurement.findOne({ babyId })
       .sort({ date: -1 })
@@ -40,7 +50,17 @@ export async function getDashboardStats(
     })
       .select("startTime endTime")
       .lean(),
-    Milestone.findOne({ babyId }).sort({ date: -1 }).select("type date notes createdAt").lean(),
+    TummyTimeEntry.find({
+      babyId,
+      endTime: { $ne: null },
+      $or: [
+        { startTime: { $gte: sleepDayStart, $lte: sleepDayEnd } },
+        { endTime: { $gte: sleepDayStart, $lte: sleepDayEnd } },
+      ],
+    })
+      .select("startTime endTime")
+      .lean(),
+    Milestone.findOne({ babyId }).sort({ date: -1 }).select("milestoneId date").lean(),
     TastingEntry.findOne({ babyId })
       .sort({ tastedDate: -1 })
       .select("foodName category tastedDate reactions isAllergen notes isCustom foodId createdAt")
@@ -61,6 +81,17 @@ export async function getDashboardStats(
       sleepDurationMinutes({
         startTime: new Date(s.startTime).toISOString(),
         endTime: new Date(s.endTime).toISOString(),
+      })
+    );
+  }, 0);
+
+  const todayTummyTimeMinutes = todayTummy.reduce((sum, e) => {
+    if (!e.endTime) return sum;
+    return (
+      sum +
+      sleepDurationMinutes({
+        startTime: new Date(e.startTime).toISOString(),
+        endTime: new Date(e.endTime).toISOString(),
       })
     );
   }, 0);
@@ -96,12 +127,10 @@ export async function getDashboardStats(
     lastHeadCircumference: lastGrowth?.headCircumference,
     lastMilestone: lastMilestone
       ? {
-          _id: String(lastMilestone._id),
-          babyId,
-          type: lastMilestone.type,
-          date: new Date(lastMilestone.date).toISOString(),
-          notes: lastMilestone.notes,
-          createdAt: new Date(lastMilestone.createdAt).toISOString(),
+          milestoneId: lastMilestone.milestoneId,
+          titleHe:
+            getMilestoneById(lastMilestone.milestoneId)?.titleHe ?? lastMilestone.milestoneId,
+          date: toDateOnlyString(lastMilestone.date),
         }
       : undefined,
     lastTasting: lastTasting
@@ -123,5 +152,6 @@ export async function getDashboardStats(
       : undefined,
     nextVaccination,
     nextWellBabyVisit: undefined,
+    todayTummyTimeMinutes,
   };
 }

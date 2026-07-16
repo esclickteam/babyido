@@ -1,5 +1,4 @@
 import type { FeedingType, FoodCategory, TastingReaction } from "@/constants/feeding";
-import type { MilestoneType } from "@/constants/milestones";
 
 export type Locale = "he";
 
@@ -66,10 +65,19 @@ export interface SleepEntry {
 export interface Milestone {
   _id: string;
   babyId: string;
-  type: MilestoneType;
+  milestoneId: string;
   date: string;
   photoUrl?: string;
   videoUrl?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface TummyTimeEntry {
+  _id: string;
+  babyId: string;
+  startTime: string;
+  endTime?: string;
   notes?: string;
   createdAt: string;
 }
@@ -140,7 +148,8 @@ export interface DashboardStats {
   lastHeight?: number;
   lastHeadCircumference?: number;
   lastTasting?: TastingEntry;
-  lastMilestone?: Milestone;
+  lastMilestone?: { milestoneId: string; titleHe: string; date: string };
+  todayTummyTimeMinutes: number;
   nextVaccination?: { vaccineId: string; nameHe: string; scheduledDate?: string; recommendedDate: string };
   nextWellBabyVisit?: string;
 }

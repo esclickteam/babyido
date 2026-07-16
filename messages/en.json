@@ -54,6 +54,7 @@
     "tastings": "Tastings",
     "foodCombinations": "Food combinations",
     "milestones": "Milestones",
+    "tummyTime": "Tummy time",
     "sleep": "Sleep",
     "vaccinations": "Vaccinations",
     "wellBaby": "Well-baby clinic",
@@ -79,6 +80,7 @@
     "headCircumference": "Head circumference",
     "todayFeeding": "Fed today",
     "todaySleep": "Slept today",
+    "todayTummyTime": "Tummy time today",
     "lastTasting": "Last tasting",
     "lastMilestone": "Last milestone",
     "nextVaccination": "Next vaccination",
@@ -132,7 +134,8 @@
     "feedingCalculator": "This calculation is for informational purposes only and does not constitute medical advice. Please follow your doctor's or lactation consultant's guidance.",
     "ai": "AI does not replace medical advice.",
     "tastings": "Tasting lists and recommended order are for tracking only and are not medical or nutritional advice.",
-    "vaccinations": "The immunization schedule follows the Ministry of Health program for tracking only — it does not replace medical advice."
+    "vaccinations": "The immunization schedule follows the Ministry of Health program for tracking only — it does not replace medical advice.",
+    "milestones": "Age ranges are estimates only and are not a medical diagnosis. Every baby develops at their own pace."
   },
   "landing": {
     "heroTitle": "Everything your baby needs",
@@ -202,6 +205,42 @@
     "vaccinesCount": "vaccines",
     "markedDone": "Vaccine marked as done",
     "disclaimer": "Confirm with your clinic nurse before each vaccine."
+  },
+  "milestones": {
+    "title": "Milestones & development",
+    "progress": "{done} of {total} completed",
+    "catDevelopment": "Development",
+    "catTeeth": "Teeth",
+    "catNutrition": "Nutrition",
+    "catSleep": "Sleep",
+    "catFirstMoments": "First moments",
+    "typicalAge": "Typical age",
+    "expectedSoon": "Expected soon",
+    "achievedDate": "Date achieved",
+    "achievedAt": "Age when achieved",
+    "markAchieved": "Mark as achieved",
+    "unmark": "Unmark",
+    "photo": "Photo",
+    "video": "Video",
+    "photoUrl": "Photo link",
+    "videoUrl": "Video link",
+    "notes": "Notes",
+    "saved": "Milestone saved!",
+    "disclaimer": "Age ranges are estimates only — not medical diagnosis."
+  },
+  "tummyTime": {
+    "title": "Tummy time",
+    "subtitle": "Track supervised tummy time sessions",
+    "viewFull": "Full page",
+    "todayTotal": "Today total",
+    "ofGoal": "of goal",
+    "dailyGoal": "Daily goal: {minutes} minutes",
+    "tapToStart": "Start tummy time",
+    "tapToStop": "Tap to stop",
+    "sessionStarted": "Tummy time started",
+    "sessionEnded": "Tummy time ended",
+    "sessionSummary": "Session summary",
+    "alreadyActive": "A session is already active"
   },
   "notifications": {
     "title": "Notifications",

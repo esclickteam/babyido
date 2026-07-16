@@ -1,0 +1,1 @@
+export const TUMMY_TIME_DAILY_GOAL_MINUTES = 30;
