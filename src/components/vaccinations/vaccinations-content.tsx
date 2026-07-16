@@ -55,6 +55,14 @@ export function VaccinationsContent() {
     protects: t("protects"),
     where: t("where"),
     appointment: t("appointment"),
+    scheduleAppointment: t("scheduleAppointment"),
+    editAppointment: t("editAppointment"),
+    confirmAppointment: t("confirmAppointment"),
+    cancel: t("cancel"),
+    saving: t("saving"),
+    moreDetails: t("moreDetails"),
+    yourAppointment: t("yourAppointment"),
+    saveNotes: t("saveNotes"),
   };
 
   function handleUpdate(vaccineId: string, patch: Record<string, unknown>) {
@@ -71,7 +79,7 @@ export function VaccinationsContent() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto w-full max-w-2xl space-y-4">
       <LegalDisclaimer variant="vaccinations" />
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--stroke)]/70 bg-white/80 px-4 py-3 backdrop-blur-sm">
@@ -153,7 +161,7 @@ export function VaccinationsContent() {
                       locale={locale}
                       saving={upsert.isPending}
                       labels={cardLabels}
-                      defaultExpanded={vaccine.id === nextVaccine?.vaccine.id}
+                      defaultExpanded={false}
                       onUpdate={(patch) => handleUpdate(vaccine.id, patch)}
                     />
                   );
