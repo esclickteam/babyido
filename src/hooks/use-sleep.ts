@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createSleepManual,
   deleteSleepEntry,
-  endSleep,
+  patchSleep,
   fetchSleepPeriodSummary,
   fetchSleepSummary,
   startSleep,
@@ -46,13 +46,17 @@ export function useStartSleep(babyId: string | null) {
   });
 }
 
-export function useEndSleep(babyId: string | null) {
+export function usePatchSleep(babyId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => endSleep(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      patchSleep(id, data),
     onSuccess: () => invalidateSleep(queryClient, babyId),
   });
 }
+
+/** @deprecated use usePatchSleep */
+export const useEndSleep = usePatchSleep;
 
 export function useCreateSleepManual(babyId: string | null) {
   const queryClient = useQueryClient();

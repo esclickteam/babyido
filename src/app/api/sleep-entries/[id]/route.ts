@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/config";
 import { connectDB } from "@/lib/db/mongodb";
-import { sleepEndSchema } from "@/lib/validations/modules";
+import { sleepPatchSchema } from "@/lib/validations/modules";
 import { SleepEntry } from "@/models/SleepEntry";
 import { Baby } from "@/models/Baby";
 import { feedingDateTimeToMongo } from "@/utils/date";
@@ -48,7 +48,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const parsed = sleepEndSchema.safeParse(body);
+    const parsed = sleepPatchSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
@@ -64,29 +64,36 @@ export async function PATCH(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    if (entry.endTime) {
-      return NextResponse.json({ error: "Sleep already ended" }, { status: 400 });
+    if (parsed.data.type) {
+      entry.type = parsed.data.type;
     }
 
-    let endTime: Date;
-    try {
-      endTime = feedingDateTimeToMongo(parsed.data.date, parsed.data.time);
-    } catch {
-      return NextResponse.json({ error: "Invalid date or time" }, { status: 400 });
+    if (parsed.data.date && parsed.data.time) {
+      if (entry.endTime) {
+        return NextResponse.json({ error: "Sleep already ended" }, { status: 400 });
+      }
+
+      let endTime: Date;
+      try {
+        endTime = feedingDateTimeToMongo(parsed.data.date, parsed.data.time);
+      } catch {
+        return NextResponse.json({ error: "Invalid date or time" }, { status: 400 });
+      }
+
+      if (endTime <= entry.startTime) {
+        return NextResponse.json({ error: "End must be after start" }, { status: 400 });
+      }
+
+      entry.endTime = endTime;
     }
 
-    if (endTime <= entry.startTime) {
-      return NextResponse.json({ error: "End must be after start" }, { status: 400 });
-    }
-
-    entry.endTime = endTime;
     await entry.save();
 
     return NextResponse.json({
       _id: entry._id.toString(),
       babyId: entry.babyId.toString(),
       startTime: entry.startTime.toISOString(),
-      endTime: entry.endTime.toISOString(),
+      endTime: entry.endTime?.toISOString(),
       type: entry.type,
       notes: entry.notes,
       createdAt: entry.createdAt.toISOString(),

@@ -8,6 +8,30 @@ export function sleepDurationMinutes(entry: Pick<SleepEntry, "startTime" | "endT
   return Math.max(0, Math.round((end - start) / 60000));
 }
 
+export function getElapsedMs(startTime: string, now = Date.now()): number {
+  return Math.max(0, now - new Date(startTime).getTime());
+}
+
+/** Live timer display e.g. 05:32 or 1:05:32 */
+export function formatElapsedTimer(startTime: string, now = Date.now()): string {
+  const totalSeconds = Math.floor(getElapsedMs(startTime, now) / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+export function formatTimeFromIso(iso: string): string {
+  const d = new Date(iso);
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const min = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${hh}:${min}`;
+}
+
 export function sleepEntryEndDateKey(entry: Pick<SleepEntry, "startTime" | "endTime">): string | null {
   if (!entry.endTime) return null;
   return feedingEntryDateKey(entry.endTime);

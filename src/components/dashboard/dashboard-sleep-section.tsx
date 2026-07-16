@@ -1,13 +1,13 @@
 "use client";
 
-import { Moon, MoonStar, Sun, Trash2 } from "lucide-react";
+import { Moon, Square, Sun, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { SLEEP_TYPES, type SleepType } from "@/constants/sleep";
+import type { SleepType } from "@/constants/sleep";
 import {
   useDeleteSleepEntry,
-  useEndSleep,
+  usePatchSleep,
   useSleepSummary,
   useStartSleep,
 } from "@/hooks/use-sleep";
@@ -18,9 +18,12 @@ import {
   getNowLocalTime,
   getTodayLocal,
 } from "@/utils/date";
-import { sleepDurationMinutes } from "@/utils/sleep";
+import {
+  formatElapsedTimer,
+  formatTimeFromIso,
+  sleepDurationMinutes,
+} from "@/utils/sleep";
 import type { Locale } from "@/types";
-import { IdoButton } from "@/components/idoland/ido-button";
 import { IdoPanel } from "@/components/idoland/ido-panel";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,6 +34,12 @@ interface DashboardSleepSectionProps {
   babyId: string;
 }
 
+interface CompletedSummary {
+  type: SleepType;
+  endTime: string;
+  durationMinutes: number;
+}
+
 export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
   const t = useTranslations("sleep");
   const td = useTranslations("dashboard");
@@ -39,22 +48,53 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
 
   const today = getTodayLocal();
   const [type, setType] = useState<SleepType>("nap");
+  const [timerTick, setTimerTick] = useState(0);
+  const [completedSummary, setCompletedSummary] = useState<CompletedSummary | null>(null);
 
   const { data: summary, isLoading } = useSleepSummary(babyId, today);
   const startSleep = useStartSleep(babyId);
-  const endSleep = useEndSleep(babyId);
+  const patchSleep = usePatchSleep(babyId);
   const deleteEntry = useDeleteSleepEntry(babyId);
 
   const active = summary?.activeEntry;
   const isSleeping = !!active;
 
-  async function handleToggleSleep() {
+  useEffect(() => {
+    if (active) setType(active.type);
+  }, [active?.type, active?._id]);
+
+  useEffect(() => {
+    if (!active) return;
+    const id = setInterval(() => setTimerTick((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, [active?._id]);
+
+  async function handleTypeChange(nextType: SleepType) {
+    setType(nextType);
+    if (active && nextType !== active.type) {
+      try {
+        await patchSleep.mutateAsync({ id: active._id, data: { type: nextType } });
+      } catch {
+        toast.error(tc("error"));
+      }
+    }
+  }
+
+  async function handleTimerPress() {
     try {
       if (isSleeping && active) {
-        await endSleep.mutateAsync({
+        const ended = await patchSleep.mutateAsync({
           id: active._id,
           data: { date: today, time: getNowLocalTime() },
         });
+        if (ended.endTime) {
+          const durationMinutes = sleepDurationMinutes(ended);
+          setCompletedSummary({
+            type: ended.type,
+            endTime: ended.endTime,
+            durationMinutes,
+          });
+        }
         toast.success(t("sleepEnded"));
       } else {
         await startSleep.mutateAsync({
@@ -63,6 +103,7 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
           date: today,
           time: getNowLocalTime(),
         });
+        setCompletedSummary(null);
         toast.success(t("sleepStarted"));
       }
     } catch (err) {
@@ -71,9 +112,15 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
     }
   }
 
+  const elapsedLabel =
+    active && isSleeping ? formatElapsedTimer(active.startTime) : "00:00";
+  void timerTick;
+
   const completedLogs = [...(summary?.entries ?? [])]
     .filter((e) => e.endTime)
     .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+
+  const isNap = type === "nap";
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(260px,320px)]">
@@ -123,66 +170,124 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
           </div>
         ) : null}
 
-        {active && (
-          <div className="flex items-center gap-3 rounded-2xl border border-indigo-300 bg-gradient-to-l from-indigo-50 to-white p-4">
-            <span className="text-2xl animate-pulse" aria-hidden>
-              😴
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold text-indigo-900">{t("sleepingNow")}</p>
-              <p className="text-sm text-indigo-700">
-                {t(active.type)} · {t("since")}{" "}
-                {formatFeedingDateTime(active.startTime, locale)}
-              </p>
-            </div>
+        {/* Sun / Moon type toggle — always visible */}
+        <div className="flex justify-center">
+          <div className="inline-flex rounded-full border border-[var(--stroke)] bg-white/90 p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => handleTypeChange("nap")}
+              className={cn(
+                "flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition",
+                isNap
+                  ? "bg-amber-400 text-white shadow-md"
+                  : "text-muted-foreground hover:bg-amber-50 hover:text-amber-800"
+              )}
+            >
+              <Sun className="size-5" />
+              {t("nap")}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeChange("night")}
+              className={cn(
+                "flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition",
+                !isNap
+                  ? "bg-indigo-600 text-white shadow-md"
+                  : "text-muted-foreground hover:bg-indigo-50 hover:text-indigo-800"
+              )}
+            >
+              <Moon className="size-5" />
+              {t("night")}
+            </button>
           </div>
-        )}
+        </div>
 
-        {!isSleeping && (
-          <div className="flex gap-2">
-            {SLEEP_TYPES.map((sleepType) => (
-              <button
-                key={sleepType}
-                type="button"
-                onClick={() => setType(sleepType)}
+        {/* Running timer button */}
+        <div className="flex flex-col items-center gap-3">
+          <button
+            type="button"
+            onClick={handleTimerPress}
+            disabled={startSleep.isPending || patchSleep.isPending}
+            className={cn(
+              "relative flex size-40 flex-col items-center justify-center gap-2 rounded-full border-4 text-center transition-all active:scale-95 sm:size-44",
+              isSleeping
+                ? isNap
+                  ? "border-amber-400 bg-gradient-to-b from-amber-100 to-amber-50 shadow-lg shadow-amber-200/50"
+                  : "border-indigo-500 bg-gradient-to-b from-indigo-100 to-indigo-50 shadow-lg shadow-indigo-200/50"
+                : isNap
+                  ? "border-amber-300 bg-white hover:border-amber-400 hover:bg-amber-50"
+                  : "border-indigo-300 bg-white hover:border-indigo-400 hover:bg-indigo-50"
+            )}
+          >
+            {isSleeping && (
+              <span
                 className={cn(
-                  "flex flex-1 items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition",
-                  type === sleepType
-                    ? sleepType === "nap"
-                      ? "border-amber-300 bg-amber-50 text-amber-900 shadow-sm"
-                      : "border-violet-300 bg-violet-50 text-violet-900 shadow-sm"
-                    : "border-[var(--stroke)] bg-white/80 text-muted-foreground hover:bg-white"
+                  "absolute inset-0 animate-ping rounded-full opacity-20",
+                  isNap ? "bg-amber-400" : "bg-indigo-500"
                 )}
-              >
-                {sleepType === "nap" ? (
-                  <Sun className="size-4" />
+              />
+            )}
+            {isSleeping ? (
+              <>
+                <Square className={cn("relative size-6", isNap ? "text-amber-700" : "text-indigo-700")} />
+                <span
+                  className={cn(
+                    "relative font-mono text-3xl font-bold tabular-nums tracking-tight sm:text-4xl",
+                    isNap ? "text-amber-900" : "text-indigo-900"
+                  )}
+                >
+                  {elapsedLabel}
+                </span>
+                <span className={cn("relative text-xs font-semibold", isNap ? "text-amber-700" : "text-indigo-700")}>
+                  {t("tapToStop")}
+                </span>
+              </>
+            ) : (
+              <>
+                {isNap ? (
+                  <Sun className="size-10 text-amber-500" />
                 ) : (
-                  <MoonStar className="size-4" />
+                  <Moon className="size-10 text-indigo-500" />
                 )}
-                {t(sleepType)}
-              </button>
-            ))}
+                <span className="text-sm font-bold text-[var(--ink)]">{t("tapToStart")}</span>
+              </>
+            )}
+          </button>
+
+          {isSleeping && active && (
+            <p className="text-sm text-muted-foreground">
+              {t(active.type)} · {t("since")} {formatFeedingDateTime(active.startTime, locale)}
+            </p>
+          )}
+        </div>
+
+        {/* Summary after stop */}
+        {completedSummary && !isSleeping && (
+          <div
+            className={cn(
+              "rounded-2xl border-2 p-4 text-center",
+              completedSummary.type === "nap"
+                ? "border-amber-300 bg-amber-50"
+                : "border-indigo-300 bg-indigo-50"
+            )}
+          >
+            <p className="text-lg font-bold text-[var(--grass-deep)]">{t("sleepSummaryTitle")}</p>
+            <p className="mt-2 text-sm font-semibold">{t(completedSummary.type)}</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-[var(--ink)]">
+              {minutesToHoursMinutes(completedSummary.durationMinutes, locale)}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("endedAt", { time: formatTimeFromIso(completedSummary.endTime) })}
+            </p>
+            <button
+              type="button"
+              onClick={() => setCompletedSummary(null)}
+              className="mt-3 text-xs font-semibold text-muted-foreground hover:underline"
+            >
+              {t("dismiss")}
+            </button>
           </div>
         )}
-
-        <IdoButton
-          wide
-          onClick={handleToggleSleep}
-          disabled={startSleep.isPending || endSleep.isPending}
-          className={cn(
-            isSleeping
-              ? "bg-indigo-600 hover:bg-indigo-700"
-              : type === "nap"
-                ? "bg-amber-500 hover:bg-amber-600"
-                : "bg-violet-600 hover:bg-violet-700"
-          )}
-        >
-          {startSleep.isPending || endSleep.isPending
-            ? tc("loading")
-            : isSleeping
-              ? t("endSleep")
-              : t("startSleep")}
-        </IdoButton>
       </IdoPanel>
 
       <IdoPanel className="flex min-h-[320px] flex-col p-4 sm:p-5 xl:min-h-0">
@@ -204,13 +309,23 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
           <ScrollArea className="flex-1 pr-2">
             <ul className="space-y-2">
               {active && (
-                <li className="flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/60 p-3">
+                <li
+                  className={cn(
+                    "flex items-center gap-2 rounded-xl border p-3",
+                    active.type === "nap"
+                      ? "border-amber-200 bg-amber-50/60"
+                      : "border-indigo-200 bg-indigo-50/60"
+                  )}
+                >
+                  <span className="text-lg" aria-hidden>
+                    {active.type === "nap" ? "☀️" : "🌙"}
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-indigo-900">
-                      {t(active.type)} · {t("inProgress")}
+                    <p className="text-sm font-semibold">
+                      {t(active.type)} · {formatElapsedTimer(active.startTime)}
                     </p>
-                    <p className="text-xs text-indigo-700">
-                      {formatFeedingDateTime(active.startTime, locale)}
+                    <p className="text-xs text-muted-foreground">
+                      {t("inProgress")} · {formatFeedingDateTime(active.startTime, locale)}
                     </p>
                   </div>
                 </li>
@@ -220,13 +335,17 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
                   key={entry._id}
                   className="flex items-center gap-2 rounded-xl border border-[var(--stroke)] bg-white/80 p-3"
                 >
+                  <span className="text-lg" aria-hidden>
+                    {entry.type === "nap" ? "☀️" : "🌙"}
+                  </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold">
                       {minutesToHoursMinutes(sleepDurationMinutes(entry), locale)} · {t(entry.type)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatFeedingDateTime(entry.startTime, locale)}
-                      {entry.endTime && ` – ${formatFeedingDateTime(entry.endTime, locale).split(" · ")[1]}`}
+                      {formatFeedingDateTime(entry.startTime, locale).split(" · ")[1]}
+                      {entry.endTime &&
+                        ` – ${formatTimeFromIso(entry.endTime)}`}
                     </p>
                   </div>
                   <button

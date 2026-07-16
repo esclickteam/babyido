@@ -60,7 +60,7 @@ export async function startSleep(data: Record<string, unknown>): Promise<SleepEn
   return res.json();
 }
 
-export async function endSleep(id: string, data: Record<string, unknown>): Promise<SleepEntry> {
+export async function patchSleep(id: string, data: Record<string, unknown>): Promise<SleepEntry> {
   const res = await fetch(`/api/sleep-entries/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -68,10 +68,13 @@ export async function endSleep(id: string, data: Record<string, unknown>): Promi
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error((body as { error?: string }).error ?? "Failed to end sleep");
+    throw new Error((body as { error?: string }).error ?? "Failed to update sleep");
   }
   return res.json();
 }
+
+/** @deprecated use patchSleep */
+export const endSleep = patchSleep;
 
 export async function createSleepManual(data: Record<string, unknown>): Promise<SleepEntry> {
   const res = await fetch("/api/sleep-entries", {
