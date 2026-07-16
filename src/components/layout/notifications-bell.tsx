@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useMarkNotificationsRead, useNotifications } from "@/hooks/use-notifications";
 import type { AppNotification, Locale } from "@/types";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -92,12 +92,13 @@ export function NotificationsBell() {
     <DropdownMenu>
       <DropdownMenuTrigger
         className={cn(
-          buttonVariants({ variant: "ghost", size: "icon" }),
-          "relative size-10 rounded-xl border border-[var(--stroke)] bg-white shadow-sm"
+          buttonVariants({ variant: "outline", size: "sm" }),
+          "relative gap-1.5 rounded-xl border-sky-200 bg-sky-50 px-2.5 font-bold text-sky-800 shadow-sm hover:bg-sky-100 sm:px-3"
         )}
         aria-label={t("title")}
       >
-        <Bell className="size-5" />
+        <Bell className="size-4 shrink-0" />
+        <span className="hidden text-xs sm:inline">{t("title")}</span>
         {unread > 0 && (
           <span className="absolute -top-1 -left-1 flex min-w-5 items-center justify-center rounded-full bg-[var(--coral)] px-1.5 text-[10px] font-bold text-white">
             {unread > 9 ? "9+" : unread}

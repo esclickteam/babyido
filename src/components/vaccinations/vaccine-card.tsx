@@ -21,6 +21,7 @@ interface VaccineCardProps {
   record: VaccinationRecord | null;
   locale: Locale;
   saving: boolean;
+  defaultExpanded?: boolean;
   labels: {
     recommended: string;
     scheduled: string;
@@ -47,8 +48,9 @@ export function VaccineCard({
   saving,
   labels,
   onUpdate,
+  defaultExpanded = false,
 }: VaccineCardProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const completed = record?.completed ?? false;
   const hasAppointment = Boolean(record?.scheduledDate);
 

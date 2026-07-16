@@ -11,7 +11,7 @@ import type { Locale } from "@/types";
 import { LegalDisclaimer } from "@/components/shared/legal-disclaimer";
 import { NoBabyPrompt } from "@/components/shared/no-baby-prompt";
 import { VaccineCard } from "@/components/vaccinations/vaccine-card";
-import { formatShortDate } from "@/utils/date";
+import { NextVaccinePanel } from "@/components/vaccinations/next-vaccine-panel";
 import { cn } from "@/lib/utils";
 
 export function VaccinationsContent() {
@@ -62,8 +62,9 @@ export function VaccinationsContent() {
       { babyId: baby!._id, vaccineId, ...patch },
       {
         onError: () => toast.error(tc("error")),
-        onSuccess: () => {
-          if (patch.completed) toast.success(t("markedDone"));
+        onSuccess: (_data, variables) => {
+          if (variables.completed) toast.success(t("markedDone"));
+          if (variables.scheduledDate) toast.success(t("appointmentSaved"));
         },
       }
     );
@@ -103,20 +104,14 @@ export function VaccinationsContent() {
       </div>
 
       {nextVaccine && (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-sky-200/70 bg-gradient-to-l from-sky-50/80 to-white px-4 py-3">
-          <span className="text-xl">{nextVaccine.vaccine.emoji}</span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold text-sky-700">{t("nextVaccine")}</p>
-            <p className="text-sm font-bold text-[var(--ink)]">
-              {nextVaccine.vaccine.nameHe} · {nextVaccine.vaccine.doseHe}
-            </p>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {nextVaccine.record?.scheduledDate
-              ? `${formatShortDate(nextVaccine.record.scheduledDate, locale)}${nextVaccine.record.scheduledTime ? ` · ${nextVaccine.record.scheduledTime}` : ""}`
-              : formatShortDate(nextVaccine.recommendedDate, locale)}
-          </p>
-        </div>
+        <NextVaccinePanel
+          vaccine={nextVaccine.vaccine}
+          recommendedDate={nextVaccine.recommendedDate}
+          record={nextVaccine.record}
+          locale={locale}
+          saving={upsert.isPending}
+          onSave={(patch) => handleUpdate(nextVaccine.vaccine.id, patch)}
+        />
       )}
 
       {isLoading ? (
@@ -158,6 +153,7 @@ export function VaccinationsContent() {
                       locale={locale}
                       saving={upsert.isPending}
                       labels={cardLabels}
+                      defaultExpanded={vaccine.id === nextVaccine?.vaccine.id}
                       onUpdate={(patch) => handleUpdate(vaccine.id, patch)}
                     />
                   );
