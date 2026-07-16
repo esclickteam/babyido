@@ -1,12 +1,12 @@
 "use client";
 
-import { Check, ChevronLeft, Plus, Sparkles, Trash2, UtensilsCrossed } from "lucide-react";
+import { Check, Plus, Search, Sparkles, Trash2, UtensilsCrossed } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { FOOD_CATEGORIES, TASTING_REACTIONS, type FoodCategory, type TastingReaction } from "@/constants/feeding";
-import { TASTING_ORDER } from "@/constants/tastings";
+import { FOOD_CATEGORIES, type FoodCategory, type TastingReaction } from "@/constants/feeding";
+import { ORDERED_FOODS, TASTING_ORDER, type FoodItem } from "@/constants/tastings";
 import { useCreateTasting, useDeleteTasting, useTastings } from "@/hooks/use-tastings";
 import { useBabyStore } from "@/stores/baby-store";
 import { formatDate, getTodayLocal } from "@/utils/date";
@@ -17,7 +17,8 @@ import { IdoButton } from "@/components/idoland/ido-button";
 import { IdoPanel } from "@/components/idoland/ido-panel";
 import { LegalDisclaimer } from "@/components/shared/legal-disclaimer";
 import { NoBabyPrompt } from "@/components/shared/no-baby-prompt";
-import { Input } from "@/components/ui/input";
+import { TastingFoodSearch } from "@/components/tastings/tasting-food-search";
+import { TastingReactionFields } from "@/components/tastings/tasting-reaction-fields";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -40,7 +41,12 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-type Tab = "recommended" | "custom" | "history";
+type Tab = "recommended" | "search" | "history";
+
+type LogTarget =
+  | { kind: "ordered"; food: FoodItem }
+  | { kind: "catalog"; food: FoodItem }
+  | { kind: "custom"; name: string; category: FoodCategory };
 
 export function TastingsContent() {
   const t = useTranslations("tastings");
@@ -51,9 +57,7 @@ export function TastingsContent() {
   const formRef = useRef<HTMLDivElement>(null);
 
   const [tab, setTab] = useState<Tab>("recommended");
-  const [selectedFoodId, setSelectedFoodId] = useState<string | null>(null);
-  const [customName, setCustomName] = useState("");
-  const [customCategory, setCustomCategory] = useState<FoodCategory>("vegetables");
+  const [logTarget, setLogTarget] = useState<LogTarget | null>(null);
   const [tastedDate, setTastedDate] = useState(getTodayLocal());
   const [reactions, setReactions] = useState<TastingReaction[]>([]);
   const [notes, setNotes] = useState("");
@@ -64,7 +68,7 @@ export function TastingsContent() {
 
   useEffect(() => {
     if (searchParams.get("action") === "add") {
-      setTab("custom");
+      setTab("search");
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [searchParams]);
@@ -72,16 +76,21 @@ export function TastingsContent() {
   const babyAgeMonths = baby ? getBabyAgeInMonths(baby.birthDate) : 0;
 
   const tastedFoodIds = useMemo(
-    () => new Set(tastings?.map((t) => t.foodId ?? t.foodName) ?? []),
+    () => new Set(tastings?.map((entry) => entry.foodId ?? entry.foodName) ?? []),
     [tastings]
   );
 
-  const nextRecommended = useMemo(
-    () => TASTING_ORDER.find((f) => !tastedFoodIds.has(f.id)),
+  const orderedProgress = useMemo(
+    () => ORDERED_FOODS.filter((food) => tastedFoodIds.has(food.id)).length,
     [tastedFoodIds]
   );
 
-  const selectedFood = TASTING_ORDER.find((f) => f.id === selectedFoodId);
+  const nextRecommended = useMemo(
+    () => ORDERED_FOODS.find((food) => !tastedFoodIds.has(food.id)),
+    [tastedFoodIds]
+  );
+
+  const progressPercent = Math.round((orderedProgress / TASTING_ORDER.length) * 100);
 
   if (!baby) return <NoBabyPrompt />;
 
@@ -92,52 +101,78 @@ export function TastingsContent() {
   }
 
   function resetForm() {
-    setSelectedFoodId(null);
-    setCustomName("");
+    setLogTarget(null);
     setReactions([]);
     setNotes("");
     setTastedDate(getTodayLocal());
   }
 
-  async function handleLogRecommended() {
-    if (!baby || !selectedFood) return;
-    try {
-      await createTasting.mutateAsync({
-        babyId: baby._id,
-        foodName: selectedFood.nameHe,
-        foodId: selectedFood.id,
-        category: selectedFood.category,
-        tastedDate: tastedDate,
-        reactions,
-        isAllergen: selectedFood.isAllergen,
-        recommendedAge: `${selectedFood.fromMonth}+`,
-        notes: notes || undefined,
-        isCustom: false,
-      });
-      toast.success(t("saved"));
-      resetForm();
-      setSelectedFoodId(null);
-    } catch {
-      toast.error(tc("error"));
-    }
+  function openOrderedFood(food: FoodItem) {
+    setLogTarget({ kind: "ordered", food });
+    setReactions([]);
+    setNotes("");
+    setTastedDate(getTodayLocal());
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  async function handleLogCustom(e: React.FormEvent) {
-    e.preventDefault();
-    if (!baby || !customName.trim()) {
-      toast.error(t("foodNameRequired"));
+  function openCatalogFood(food: FoodItem) {
+    if (food.orderIndex) {
+      openOrderedFood(food);
       return;
     }
-    try {
-      await createTasting.mutateAsync({
+    setLogTarget({ kind: "catalog", food });
+    setReactions([]);
+    setNotes("");
+    setTastedDate(getTodayLocal());
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function openCustomFood(name: string) {
+    setLogTarget({ kind: "custom", name, category: "vegetables" });
+    setReactions([]);
+    setNotes("");
+    setTastedDate(getTodayLocal());
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function handleSave() {
+    if (!baby || !logTarget) return;
+
+    const payload = (() => {
+      if (logTarget.kind === "ordered" || logTarget.kind === "catalog") {
+        const { food } = logTarget;
+        return {
+          babyId: baby._id,
+          foodName: food.nameHe,
+          foodId: food.id,
+          category: food.category,
+          tastedDate,
+          reactions,
+          isAllergen: food.isAllergen,
+          recommendedAge: `${food.fromMonth}+`,
+          notes: notes || undefined,
+          isCustom: logTarget.kind === "catalog",
+        };
+      }
+      if (!logTarget.name.trim()) {
+        toast.error(t("foodNameRequired"));
+        return null;
+      }
+      return {
         babyId: baby._id,
-        foodName: customName.trim(),
-        category: customCategory,
-        tastedDate: tastedDate,
+        foodName: logTarget.name.trim(),
+        category: logTarget.category,
+        tastedDate,
         reactions,
         notes: notes || undefined,
         isCustom: true,
-      });
+      };
+    })();
+
+    if (!payload) return;
+
+    try {
+      await createTasting.mutateAsync(payload);
       toast.success(t("saved"));
       resetForm();
     } catch {
@@ -145,13 +180,44 @@ export function TastingsContent() {
     }
   }
 
+  const logTitle = (() => {
+    if (!logTarget) return null;
+    if (logTarget.kind === "custom") return logTarget.name;
+    return `${logTarget.food.emoji} ${logTarget.food.nameHe}`;
+  })();
+
   return (
     <div className="space-y-6">
+      <LegalDisclaimer variant="tastings" />
+
+      <IdoPanel className="space-y-3 p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">{t("progressLabel")}</p>
+            <p className="font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--grass-deep)]">
+              {t("progressCount", {
+                done: orderedProgress,
+                total: TASTING_ORDER.length,
+              })}
+            </p>
+          </div>
+          <span className="rounded-full bg-[var(--grass)]/15 px-3 py-1 text-sm font-bold text-[var(--grass-deep)]">
+            {progressPercent}%
+          </span>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-white/70">
+          <div
+            className="h-full rounded-full bg-[var(--grass)] transition-all"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      </IdoPanel>
+
       <div className="flex gap-2 overflow-x-auto pb-1">
         {(
           [
             { key: "recommended" as const, label: t("recommendedOrder"), icon: Sparkles },
-            { key: "custom" as const, label: t("customFood"), icon: Plus },
+            { key: "search" as const, label: t("searchAndAdd"), icon: Search },
             { key: "history" as const, label: t("history"), icon: UtensilsCrossed },
           ] as const
         ).map(({ key, label, icon: Icon }) => (
@@ -173,17 +239,22 @@ export function TastingsContent() {
       </div>
 
       {nextRecommended && tab === "recommended" && (
-        <IdoPanel className="flex items-center gap-4 p-4 sm:p-5">
+        <IdoPanel className="flex flex-col items-stretch gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
           <span className="text-3xl">{nextRecommended.emoji}</span>
           <div className="flex-1">
             <p className="text-sm text-muted-foreground">{t("nextSuggested")}</p>
             <p className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--grass-deep)]">
-              {nextRecommended.nameHe}
+              {t("stepFood", {
+                step: nextRecommended.orderIndex ?? 0,
+                food: nextRecommended.nameHe,
+              })}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("fromMonth", { month: nextRecommended.fromMonth })}
+              {nextRecommended.isAllergen && ` · ${t("allergen")}`}
             </p>
           </div>
-          <IdoButton onClick={() => setSelectedFoodId(nextRecommended.id)}>
-            {t("logTasting")}
-          </IdoButton>
+          <IdoButton onClick={() => openOrderedFood(nextRecommended)}>{t("logTasting")}</IdoButton>
         </IdoPanel>
       )}
 
@@ -193,7 +264,7 @@ export function TastingsContent() {
           <p className="text-sm text-muted-foreground">{t("orderHint")}</p>
 
           <ul className="space-y-2">
-            {TASTING_ORDER.map((food, index) => {
+            {ORDERED_FOODS.map((food) => {
               const done = tastedFoodIds.has(food.id);
               const isNext = nextRecommended?.id === food.id;
               const ageOk = babyAgeMonths >= food.fromMonth;
@@ -202,12 +273,12 @@ export function TastingsContent() {
                 <li key={food.id}>
                   <button
                     type="button"
-                    onClick={() => !done && setSelectedFoodId(food.id)}
+                    onClick={() => !done && openOrderedFood(food)}
                     disabled={done}
                     className={cn(
                       "flex w-full items-center gap-3 rounded-2xl border p-4 text-right transition",
                       done
-                        ? "border-[var(--grass)]/30 bg-[var(--grass)]/10 opacity-80"
+                        ? "border-[var(--grass)]/30 bg-[var(--grass)]/10 opacity-90"
                         : isNext
                           ? "border-[var(--coral)] bg-white shadow-md"
                           : "border-[var(--stroke)] bg-white/80 hover:bg-white",
@@ -215,7 +286,7 @@ export function TastingsContent() {
                     )}
                   >
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold">
-                      {done ? <Check className="size-4 text-[var(--grass-deep)]" /> : index + 1}
+                      {done ? <Check className="size-4 text-[var(--grass-deep)]" /> : food.orderIndex}
                     </span>
                     <span className="text-2xl">{food.emoji}</span>
                     <div className="min-w-0 flex-1">
@@ -223,16 +294,13 @@ export function TastingsContent() {
                       <p className="text-xs text-muted-foreground">
                         {t("fromMonth", { month: food.fromMonth })}
                         {food.isAllergen && ` · ${t("allergen")}`}
-                        {!ageOk && ` · ${t("waitAge")}`}
+                        {!ageOk && !done && ` · ${t("waitAge")}`}
                       </p>
                     </div>
                     {done && (
                       <span className="shrink-0 rounded-full bg-[var(--grass)]/20 px-2 py-0.5 text-xs font-semibold text-[var(--grass-deep)]">
                         {t("done")}
                       </span>
-                    )}
-                    {!done && (
-                      <ChevronLeft className="size-4 shrink-0 text-muted-foreground" />
                     )}
                   </button>
                 </li>
@@ -242,79 +310,89 @@ export function TastingsContent() {
         </IdoPanel>
       )}
 
-      {tab === "recommended" && selectedFood && (
+      {tab === "search" && (
+        <div ref={formRef} className="space-y-4">
+          <IdoPanel className="space-y-4 p-5 sm:p-6">
+            <SectionTitle>{t("searchAndAdd")}</SectionTitle>
+            <p className="text-sm text-muted-foreground">{t("searchHint")}</p>
+            <TastingFoodSearch
+              onSelectFood={openCatalogFood}
+              onAddCustom={openCustomFood}
+              tastedFoodIds={tastedFoodIds}
+              searchPlaceholder={t("searchPlaceholder")}
+              addCustomLabel={(name) => t("addCustomFood", { name })}
+              noResultsLabel={t("noSearchResults")}
+              inOrderLabel={(step) => t("inOrderStep", { step })}
+              extraFoodLabel={t("extraFood")}
+              doneLabel={t("done")}
+              fromMonthLabel={(month) => t("fromMonth", { month })}
+              allergenLabel={t("allergen")}
+            />
+          </IdoPanel>
+        </div>
+      )}
+
+      {logTarget && (
         <IdoPanel className="space-y-5 p-5 sm:p-6">
           <SectionTitle>
-            {t("logFood")}: {selectedFood.emoji} {selectedFood.nameHe}
+            {t("logFood")}: {logTitle}
           </SectionTitle>
-          <TastingFormFields
-            tastedDate={tastedDate}
-            setTastedDate={setTastedDate}
+
+          {logTarget.kind === "custom" && (
+            <div className="space-y-2">
+              <Label>{t("category")}</Label>
+              <Select
+                value={logTarget.category}
+                onValueChange={(value) =>
+                  setLogTarget({ ...logTarget, category: value as FoodCategory })
+                }
+              >
+                <SelectTrigger className={inputClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {FOOD_CATEGORIES.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {t(`categories.${category}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label>{tc("date")}</Label>
+            <HebrewDateInput value={tastedDate} onChange={setTastedDate} className={inputClass} />
+          </div>
+
+          <TastingReactionFields
             reactions={reactions}
-            toggleReaction={toggleReaction}
-            notes={notes}
-            setNotes={setNotes}
-            t={t}
-            tc={tc}
+            onToggle={toggleReaction}
+            reactionsLabel={t("reactionsLabel")}
+            noReactionHint={t("noReactionHint")}
+            getReactionLabel={(reaction) => t(`reactions.${reaction}`)}
           />
+
+          <div className="space-y-2">
+            <Label>{t("notes")}</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className={cn(inputClass, "min-h-[80px]")}
+              placeholder={t("notesPlaceholder")}
+            />
+          </div>
+
           <div className="flex gap-3">
-            <IdoButton variant="ghost" onClick={() => setSelectedFoodId(null)}>
+            <IdoButton variant="ghost" onClick={resetForm}>
               {tc("cancel")}
             </IdoButton>
-            <IdoButton wide onClick={handleLogRecommended} disabled={createTasting.isPending}>
+            <IdoButton wide onClick={handleSave} disabled={createTasting.isPending}>
               {createTasting.isPending ? tc("loading") : t("saveTasting")}
             </IdoButton>
           </div>
         </IdoPanel>
-      )}
-
-      {tab === "custom" && (
-        <div ref={formRef}>
-          <IdoPanel className="space-y-5 p-5 sm:p-6">
-            <SectionTitle>{t("customFood")}</SectionTitle>
-            <p className="text-sm text-muted-foreground">{t("customHint")}</p>
-
-            <form onSubmit={handleLogCustom} className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t("foodName")}</Label>
-                <Input
-                  value={customName}
-                  onChange={(e) => setCustomName(e.target.value)}
-                  placeholder={t("foodNamePlaceholder")}
-                  className={inputClass}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t("category")}</Label>
-                <Select value={customCategory} onValueChange={(v) => setCustomCategory(v as FoodCategory)}>
-                  <SelectTrigger className={inputClass}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {FOOD_CATEGORIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {t(`categories.${c}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <TastingFormFields
-                tastedDate={tastedDate}
-                setTastedDate={setTastedDate}
-                reactions={reactions}
-                toggleReaction={toggleReaction}
-                notes={notes}
-                setNotes={setNotes}
-                t={t}
-                tc={tc}
-              />
-              <IdoButton type="submit" wide disabled={createTasting.isPending}>
-                {createTasting.isPending ? tc("loading") : t("saveTasting")}
-              </IdoButton>
-            </form>
-          </IdoPanel>
-        </div>
       )}
 
       {tab === "history" && (
@@ -346,8 +424,10 @@ export function TastingsContent() {
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {item.tastedDate && formatDate(item.tastedDate, locale)}
-                      {item.reactions.length > 0 &&
-                        ` · ${item.reactions.map((r) => t(`reactions.${r}`)).join(", ")}`}
+                      {" · "}
+                      {item.reactions.length > 0
+                        ? item.reactions.map((r) => t(`reactions.${r}`)).join(", ")
+                        : t("noReactions")}
                     </p>
                   </div>
                   <button
@@ -364,69 +444,6 @@ export function TastingsContent() {
           )}
         </IdoPanel>
       )}
-
-      <LegalDisclaimer />
     </div>
-  );
-}
-
-function TastingFormFields({
-  tastedDate,
-  setTastedDate,
-  reactions,
-  toggleReaction,
-  notes,
-  setNotes,
-  t,
-  tc,
-}: {
-  tastedDate: string;
-  setTastedDate: (v: string) => void;
-  reactions: TastingReaction[];
-  toggleReaction: (r: TastingReaction) => void;
-  notes: string;
-  setNotes: (v: string) => void;
-  t: ReturnType<typeof useTranslations<"tastings">>;
-  tc: ReturnType<typeof useTranslations<"common">>;
-}) {
-  return (
-    <>
-      <div className="space-y-2">
-        <Label>{tc("date")}</Label>
-        <HebrewDateInput
-          value={tastedDate}
-          onChange={setTastedDate}
-          className={inputClass}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>{t("reactionsLabel")}</Label>
-        <div className="flex flex-wrap gap-2">
-          {TASTING_REACTIONS.map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => toggleReaction(r)}
-              className={cn(
-                "rounded-full px-3 py-1.5 text-sm font-semibold transition",
-                reactions.includes(r)
-                  ? "bg-[var(--coral)] text-white"
-                  : "bg-white/80 text-[var(--ink)] hover:bg-white"
-              )}
-            >
-              {t(`reactions.${r}`)}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="space-y-2">
-        <Label>{t("notes")}</Label>
-        <Textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          className={cn(inputClass, "min-h-[80px]")}
-        />
-      </div>
-    </>
   );
 }
