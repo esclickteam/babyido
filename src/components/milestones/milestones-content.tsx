@@ -1,7 +1,7 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { Clock } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -10,11 +10,15 @@ import {
 } from "@/constants/milestones";
 import { useMilestonePlan, useUpsertMilestone } from "@/hooks/use-milestones";
 import { useBabyStore } from "@/stores/baby-store";
-import type { Locale } from "@/types";
 import { LegalDisclaimer } from "@/components/shared/legal-disclaimer";
 import { NoBabyPrompt } from "@/components/shared/no-baby-prompt";
 import { MilestoneCard } from "@/components/milestones/milestone-card";
 import { MilestoneCelebration } from "@/components/milestones/milestone-celebration";
+import {
+  CategoryTabIcon,
+  MilestoneHeroIcon,
+  MilestoneIconBadge,
+} from "@/components/milestones/milestone-icons";
 import { cn } from "@/lib/utils";
 import type { MilestoneStatus } from "@/utils/milestone-status";
 
@@ -29,7 +33,6 @@ const STATUS_LABELS: Record<MilestoneStatus, string> = {
 export function MilestonesContent() {
   const t = useTranslations("milestones");
   const tc = useTranslations("common");
-  const locale = useLocale() as Locale;
   const baby = useBabyStore((s) => s.getSelectedBaby());
   const [category, setCategory] = useState<MilestoneCategory>("development");
   const [celebration, setCelebration] = useState<string | null>(null);
@@ -70,18 +73,16 @@ export function MilestonesContent() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto w-full max-w-2xl space-y-4">
       {celebration && (
         <MilestoneCelebration title={celebration} onDone={() => setCelebration(null)} />
       )}
 
       <LegalDisclaimer variant="milestones" />
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--stroke)]/70 bg-white/80 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--stroke)]/70 bg-white/90 px-4 py-3 shadow-sm backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-violet-100">
-            <Sparkles className="size-5 text-violet-700" />
-          </div>
+          <MilestoneHeroIcon category={category} />
           <div>
             <h2 className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--grass-deep)]">
               {t("title")}
@@ -95,53 +96,85 @@ export function MilestonesContent() {
         </div>
         {plan && (
           <div className="flex min-w-[8rem] items-center gap-2">
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-              <div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${progress}%` }} />
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-violet-100">
+              <div
+                className="h-full rounded-full bg-gradient-to-l from-violet-500 to-violet-600 transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
             </div>
             <span className="text-xs font-bold text-violet-700">{progress}%</span>
           </div>
         )}
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {MILESTONE_CATEGORIES.map((cat) => (
           <button
             key={cat.id}
             type="button"
             onClick={() => setCategory(cat.id)}
             className={cn(
-              "shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold transition",
+              "flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-bold transition-all duration-200",
               category === cat.id
-                ? "border-violet-300 bg-violet-100 text-violet-900"
-                : "border-[var(--stroke)] bg-white text-muted-foreground hover:bg-muted/50"
+                ? "border-violet-300 bg-gradient-to-l from-violet-100 to-white text-violet-900 shadow-sm"
+                : "border-[var(--stroke)] bg-white text-muted-foreground hover:border-violet-200 hover:bg-violet-50/50"
             )}
           >
-            {cat.emoji} {t(cat.labelKey)}
+            <CategoryTabIcon category={cat.id} active={category === cat.id} />
+            {t(cat.labelKey)}
           </button>
         ))}
       </div>
 
       {plan?.nextExpected && category === "development" && (
-        <div className="rounded-xl border border-sky-200 bg-sky-50/60 px-4 py-3">
-          <p className="text-xs font-bold text-sky-800">⏳ {t("expectedSoon")}</p>
-          <p className="text-sm font-bold">
-            {plan.nextExpected.milestone.emoji} {plan.nextExpected.milestone.titleHe}
-          </p>
+        <div className="overflow-hidden rounded-2xl border border-sky-200 bg-gradient-to-l from-sky-50 via-white to-violet-50/40 p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <MilestoneIconBadge
+              id={plan.nextExpected.milestone.id}
+              category={plan.nextExpected.milestone.category}
+              status="expected_soon"
+              size="md"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="flex items-center gap-1.5 text-xs font-bold text-sky-800">
+                <Clock className="size-3.5 ms-icon-wiggle" />
+                {t("expectedSoon")}
+              </p>
+              <p className="mt-1 text-base font-bold text-[var(--ink)]">
+                {plan.nextExpected.milestone.titleHe}
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-14 animate-pulse rounded-xl bg-white/50" />
+            <div key={i} className="h-16 animate-pulse rounded-2xl bg-white/60" />
           ))}
         </div>
       ) : (
         <div className="space-y-5">
-          {groups.map((group) => (
+          {groups.map((group, groupIndex) => (
             <section key={group.label}>
-              <h3 className="mb-2 px-1 text-sm font-bold text-[var(--grass-deep)]">{group.label}</h3>
-              <div className="space-y-1.5 border-r-2 border-violet-200/40 pr-3">
+              <div className="mb-2 flex items-center gap-2 px-1">
+                <span
+                  className={cn(
+                    "flex size-7 items-center justify-center rounded-full text-[11px] font-bold",
+                    groupIndex === 0
+                      ? "bg-violet-100 text-violet-800"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {groupIndex + 1}
+                </span>
+                <h3 className="text-sm font-bold text-[var(--grass-deep)]">{group.label}</h3>
+                <span className="text-[11px] text-muted-foreground">
+                  {group.items.length} {t("itemsCount")}
+                </span>
+              </div>
+              <div className="space-y-2 border-r-2 border-violet-200/50 pr-3">
                 {group.items.map((row) => (
                   <MilestoneCard
                     key={row.milestone.id}
