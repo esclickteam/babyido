@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { NotificationsContent } from "@/components/notifications/notifications-content";
 import { PageContainer } from "@/components/shared/page-container";
-import { ModuleScaffold } from "@/components/shared/module-scaffold";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default async function RemindersPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -8,7 +10,9 @@ export default async function RemindersPage({ params }: { params: Promise<{ loca
   const t = await getTranslations("nav");
   return (
     <PageContainer title={t("reminders")}>
-      <ModuleScaffold />
+      <Suspense fallback={<Skeleton className="h-96 w-full rounded-3xl" />}>
+        <NotificationsContent />
+      </Suspense>
     </PageContainer>
   );
 }

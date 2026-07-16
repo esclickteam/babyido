@@ -99,6 +99,7 @@ export interface VaccinationRecord {
   babyId: string;
   vaccineId: string;
   scheduledDate?: string;
+  scheduledTime?: string;
   completed: boolean;
   completedDate?: string;
   notes?: string;
@@ -144,7 +145,43 @@ export interface DashboardStats {
   nextWellBabyVisit?: string;
 }
 
+export interface UserProfile {
+  name: string;
+  email: string;
+  notificationEmail?: string;
+}
+
+export type NotificationType =
+  | "vaccination"
+  | "feeding"
+  | "tasting"
+  | "appointment"
+  | "reminder"
+  | "custom"
+  | "vitaminD"
+  | "iron"
+  | "measurement"
+  | "doctor"
+  | "medication"
+  | "sleep";
+
+export interface AppNotification {
+  _id: string;
+  userId: string;
+  babyId?: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  scheduledAt: string;
+  scheduledTime?: string;
+  read: boolean;
+  emailSentAt?: string;
+  href?: string;
+  createdAt: string;
+}
+
 export interface UserSettings {
   locale: Locale;
   theme: "light" | "dark" | "system";
+  notificationEmail?: string;
 }

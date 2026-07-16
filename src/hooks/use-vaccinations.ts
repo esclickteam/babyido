@@ -18,6 +18,7 @@ export function useUpsertVaccination(babyId: string | null) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vaccinations", babyId] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats", babyId] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 }

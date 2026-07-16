@@ -5,6 +5,7 @@ export interface IVaccinationRecord {
   babyId: mongoose.Types.ObjectId;
   vaccineId: string;
   scheduledDate?: Date;
+  scheduledTime?: string;
   completed: boolean;
   completedDate?: Date;
   notes?: string;
@@ -20,6 +21,7 @@ const VaccinationRecordSchema = new Schema<IVaccinationRecord>(
     babyId: { type: Schema.Types.ObjectId, ref: "Baby", required: true, index: true },
     vaccineId: { type: String, required: true },
     scheduledDate: { type: Date },
+    scheduledTime: { type: String },
     completed: { type: Boolean, default: false },
     completedDate: { type: Date },
     notes: { type: String, maxlength: 2000 },

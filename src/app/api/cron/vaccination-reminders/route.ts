@@ -2,11 +2,19 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/mongodb";
 import { getVaccineById } from "@/constants/vaccinations";
 import { sendEmail, vaccinationReminderHtml } from "@/lib/email/resend";
+import {
+  markVaccinationEmailSent,
+  syncVaccinationNotification,
+} from "@/lib/notifications/sync-vaccination";
 import { VaccinationRecord } from "@/models/VaccinationRecord";
 import { Baby } from "@/models/Baby";
 import { User } from "@/models/User";
 import { dateOnlyToMongo, getTodayIsrael, isoToDisplay, toDateOnlyString } from "@/utils/date";
 import { getReminderDate } from "@/utils/vaccination-schedule";
+
+function notificationEmail(user: { email: string; notificationEmail?: string }) {
+  return user.notificationEmail?.trim() || user.email;
+}
 
 export async function GET(request: Request) {
   try {
@@ -44,16 +52,18 @@ export async function GET(request: Request) {
       if (!baby) continue;
 
       const user = await User.findById(baby.userId).lean();
-      if (!user?.email) continue;
+      const to = user ? notificationEmail(user) : null;
+      if (!to || !user) continue;
 
       const result = await sendEmail({
-        to: user.email,
-        subject: `תזכורת: חיסון ${vaccine.nameHe} מחר — ${baby.name}`,
+        to,
+        subject: `תזכורת: חיסון ${vaccine.nameHe} מחר${record.scheduledTime ? ` בשעה ${record.scheduledTime}` : ""} — ${baby.name}`,
         html: vaccinationReminderHtml({
           parentName: user.name,
           babyName: baby.name,
           vaccineName: `${vaccine.nameHe} (${vaccine.doseHe})`,
           scheduledDate: isoToDisplay(scheduledStr),
+          scheduledTime: record.scheduledTime,
           clinicNote: vaccine.whereHe,
         }),
       });
@@ -62,6 +72,14 @@ export async function GET(request: Request) {
         await VaccinationRecord.findByIdAndUpdate(record._id, {
           reminderSentAt: dateOnlyToMongo(today),
         });
+        await syncVaccinationNotification({
+          userId: String(baby.userId),
+          babyId: String(baby._id),
+          babyName: baby.name,
+          vaccine,
+          record,
+        });
+        await markVaccinationEmailSent(String(baby.userId), String(baby._id), record.vaccineId);
         sent++;
       }
     }

@@ -1,3 +1,4 @@
+export { Notification } from "./Notification";
 export { User } from "./User";
 export { Baby } from "./Baby";
 export { GrowthMeasurement } from "./GrowthMeasurement";

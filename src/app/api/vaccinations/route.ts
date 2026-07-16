@@ -3,17 +3,19 @@ import { auth } from "@/lib/auth/config";
 import { getOwnedBaby } from "@/lib/api/baby-access";
 import { connectDB } from "@/lib/db/mongodb";
 import { VACCINE_SCHEDULE, getVaccineById } from "@/constants/vaccinations";
+import { syncVaccinationNotification } from "@/lib/notifications/sync-vaccination";
 import { vaccinationRecordSchema } from "@/lib/validations/modules";
 import { VaccinationRecord } from "@/models/VaccinationRecord";
+import { Baby } from "@/models/Baby";
 import { dateOnlyToMongo, toDateOnlyString } from "@/utils/date";
 import { getRecommendedVaccineDate } from "@/utils/vaccination-schedule";
-import { Baby } from "@/models/Baby";
 
 function serializeRecord(r: {
   _id: { toString(): string };
   babyId: { toString(): string };
   vaccineId: string;
   scheduledDate?: Date;
+  scheduledTime?: string;
   completed: boolean;
   completedDate?: Date;
   notes?: string;
@@ -28,6 +30,7 @@ function serializeRecord(r: {
     babyId: r.babyId.toString(),
     vaccineId: r.vaccineId,
     scheduledDate: r.scheduledDate ? toDateOnlyString(r.scheduledDate) : undefined,
+    scheduledTime: r.scheduledTime,
     completed: r.completed,
     completedDate: r.completedDate ? toDateOnlyString(r.completedDate) : undefined,
     notes: r.notes,
@@ -126,6 +129,10 @@ export async function PUT(request: Request) {
         : null;
       update.reminderSentAt = null;
     }
+    if (parsed.data.scheduledTime !== undefined) {
+      update.scheduledTime = parsed.data.scheduledTime || null;
+      update.reminderSentAt = null;
+    }
     if (parsed.data.completed !== undefined) update.completed = parsed.data.completed;
     if (parsed.data.completedDate !== undefined) {
       update.completedDate = parsed.data.completedDate
@@ -145,6 +152,18 @@ export async function PUT(request: Request) {
       { $set: update },
       { upsert: true, new: true }
     );
+
+    const vaccine = getVaccineById(parsed.data.vaccineId)!;
+    const baby = await Baby.findById(parsed.data.babyId).lean();
+    if (baby) {
+      await syncVaccinationNotification({
+        userId: session.user.id,
+        babyId: parsed.data.babyId,
+        babyName: baby.name,
+        vaccine,
+        record,
+      });
+    }
 
     return NextResponse.json(serializeRecord(record));
   } catch {

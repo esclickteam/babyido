@@ -8,6 +8,7 @@ export interface IUser {
   image?: string;
   locale: "he" | "en";
   theme: "light" | "dark" | "system";
+  notificationEmail?: string;
   emailVerified?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -21,6 +22,7 @@ const UserSchema = new Schema<IUser>(
     image: { type: String },
     locale: { type: String, enum: ["he", "en"], default: "he" },
     theme: { type: String, enum: ["light", "dark", "system"], default: "system" },
+    notificationEmail: { type: String, lowercase: true, trim: true },
     emailVerified: { type: Date },
   },
   { timestamps: true }

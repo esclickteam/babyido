@@ -155,6 +155,10 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System",
+    "notificationEmail": "Notification email",
+    "notificationEmailHint": "Reminders for vaccines and appointments go here. If empty, your account email is used.",
+    "notificationEmailSaved": "Notification email saved",
+    "accountEmail": "Account email",
     "exportData": "Export data",
     "deleteAccount": "Delete account"
   },
@@ -170,24 +174,34 @@
     "remainingToday": "Remaining today"
   },
   "vaccinations": {
-    "title": "Baby immunization schedule",
-    "subtitle": "Based on the Israeli Ministry of Health routine schedule. Tracking, reminders and notes — not medical advice.",
-    "mohLink": "Official MOH immunization schedule",
+    "title": "Immunization schedule",
+    "subtitle": "Tracking and reminders — not medical advice.",
     "progress": "{done} of {total} vaccines completed",
-    "nextVaccine": "Next vaccine in schedule",
-    "recommendedDate": "Recommended date",
-    "scheduledDate": "Scheduled appointment",
+    "nextVaccine": "Up next",
+    "recommendedDate": "Recommended",
+    "scheduledDate": "Appointment",
+    "scheduledTime": "Time",
+    "appointment": "Schedule appointment",
     "completed": "Done",
     "completedDate": "Date given",
     "notes": "Notes",
     "sideEffects": "Side effects",
-    "emailReminder": "Email me a reminder one day before the appointment",
+    "emailReminder": "Email reminder one day before",
     "optional": "As directed",
     "seasonal": "Seasonal",
     "protects": "Protects against",
     "where": "Where",
     "vaccinesCount": "vaccines",
     "markedDone": "Vaccine marked as done",
-    "disclaimer": "Information follows the MOH schedule and may change. Confirm with your well-baby clinic nurse before each vaccine."
+    "disclaimer": "Confirm with your clinic nurse before each vaccine."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Reminders for vaccines, appointments and more",
+    "empty": "No notifications yet",
+    "emptyHint": "When you schedule a vaccine, a reminder will appear here and by email",
+    "markAllRead": "Mark all as read",
+    "viewAll": "All notifications",
+    "emailSent": "Email sent"
   }
 }

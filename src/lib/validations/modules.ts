@@ -103,6 +103,7 @@ export const vaccinationRecordSchema = z.object({
   babyId: z.string().min(1),
   vaccineId: z.string().min(1),
   scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  scheduledTime: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
   completed: z.boolean().optional(),
   completedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
   notes: z.string().max(2000).optional(),

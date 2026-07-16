@@ -45,6 +45,11 @@ const QuickAddSheet = dynamic(
   { ssr: false }
 );
 
+const NotificationsBell = dynamic(
+  () => import("@/components/layout/notifications-bell").then((m) => m.NotificationsBell),
+  { ssr: false }
+);
+
 interface AppShellUser {
   name?: string | null;
   image?: string | null;
@@ -221,6 +226,7 @@ export function AppShell({
               <BabySwitcher />
             </div>
             <QuickAddSheet />
+            <NotificationsBell />
             <div className="hidden sm:contents">
               <ThemeToggle />
             </div>
