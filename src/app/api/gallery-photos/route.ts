@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth/config";
 import { getOwnedBaby } from "@/lib/api/baby-access";
 import { connectDB } from "@/lib/db/mongodb";
 import { deleteCloudinaryImage, isCloudinaryConfigured, uploadGalleryImage } from "@/lib/cloudinary";
+import { ensureGalleryPhotoIndexes } from "@/lib/db/gallery-indexes";
 import { GALLERY_MAX_PHOTOS_PER_SLOT } from "@/constants/gallery";
 import { galleryPhotoUploadSchema } from "@/lib/validations/modules";
 import { GalleryPhoto } from "@/models/GalleryPhoto";
@@ -54,6 +55,7 @@ export async function GET(request: Request) {
     }
 
     await connectDB();
+    await ensureGalleryPhotoIndexes();
     const photos = await GalleryPhoto.find({ babyId })
       .sort({ ageMonths: 1, createdAt: 1 })
       .lean();
@@ -103,6 +105,7 @@ export async function POST(request: Request) {
     }
 
     await connectDB();
+    await ensureGalleryPhotoIndexes();
     const existingCount = await GalleryPhoto.countDocuments({
       babyId: parsed.data.babyId,
       ageMonths: parsed.data.ageMonths,
@@ -125,6 +128,22 @@ export async function POST(request: Request) {
 
     return NextResponse.json(serialize(photo), { status: 201 });
   } catch (error) {
+    const isDuplicate =
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      (error as { code: number }).code === 11000;
+
+    if (isDuplicate) {
+      try {
+        await ensureGalleryPhotoIndexes();
+      } catch {
+        /* ignore */
+      }
+      console.error("POST /api/gallery-photos duplicate key — legacy index", error);
+      return NextResponse.json({ error: "legacyIndex" }, { status: 409 });
+    }
+
     console.error("POST /api/gallery-photos", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }

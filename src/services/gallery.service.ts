@@ -26,6 +26,9 @@ export async function uploadGalleryPhoto(data: {
     if (body.error === "maxPhotosReached") {
       throw new Error("maxPhotosReached");
     }
+    if (body.error === "legacyIndex") {
+      throw new Error("legacyIndex");
+    }
     if (body.error === "Cloudinary not configured") {
       throw new Error("cloudinaryNotConfigured");
     }

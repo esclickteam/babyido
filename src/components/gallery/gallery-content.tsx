@@ -1,11 +1,11 @@
 "use client";
 
-import { Camera, ImagePlus, Plus } from "lucide-react";
-import Image from "next/image";
+import { Camera } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { GalleryLightbox } from "@/components/gallery/gallery-lightbox";
+import { GallerySlotCard } from "@/components/gallery/gallery-slot-card";
 import { NoBabyPrompt } from "@/components/shared/no-baby-prompt";
 import {
   useDeleteGalleryPhoto,
@@ -14,7 +14,6 @@ import {
 } from "@/hooks/use-gallery";
 import { useBabyStore } from "@/stores/baby-store";
 import type { GalleryPhoto, Locale } from "@/types";
-import { cn } from "@/lib/utils";
 import {
   formatGallerySlotLabel,
   GALLERY_AGE_SLOTS,
@@ -56,12 +55,32 @@ export function GalleryContent() {
     ? formatGallerySlotLabel(viewer.slot, locale, baby.birthDate)
     : "";
 
-  async function handleFile(file: File, ageMonths: number) {
+  async function uploadFiles(files: File[], ageMonths: number) {
     if (!baby) return;
+
+    const existing = photosBySlot.get(ageMonths)?.length ?? 0;
+    const room = GALLERY_MAX_PHOTOS_PER_SLOT - existing;
+    if (room <= 0) {
+      toast.error(t("maxPhotos", { max: GALLERY_MAX_PHOTOS_PER_SLOT }));
+      return;
+    }
+
+    const batch = files.slice(0, room);
+    if (files.length > batch.length) {
+      toast.message(t("uploadTrimmed", { max: GALLERY_MAX_PHOTOS_PER_SLOT }));
+    }
+
     setUploadingSlot(ageMonths);
+    let uploaded = 0;
+
     try {
-      await upload.mutateAsync({ babyId: baby._id, ageMonths, file });
-      toast.success(t("saved"));
+      for (const file of batch) {
+        await upload.mutateAsync({ babyId: baby._id, ageMonths, file });
+        uploaded += 1;
+      }
+      toast.success(
+        uploaded === 1 ? t("saved") : t("savedMany", { count: uploaded })
+      );
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === "maxPhotosReached") {
@@ -72,8 +91,16 @@ export function GalleryContent() {
           toast.error(t("cloudinaryMissing"));
           return;
         }
+        if (error.message === "legacyIndex") {
+          toast.error(t("legacyIndex"));
+          return;
+        }
       }
-      toast.error(tc("error"));
+      if (uploaded > 0) {
+        toast.message(t("partialUpload", { count: uploaded }));
+      } else {
+        toast.error(tc("error"));
+      }
     } finally {
       setUploadingSlot(null);
       setActiveSlot(null);
@@ -118,10 +145,11 @@ export function GalleryContent() {
         ref={inputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/heic"
+        multiple
         className="hidden"
         onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file && activeSlot !== null) void handleFile(file, activeSlot);
+          const files = Array.from(e.target.files ?? []);
+          if (files.length && activeSlot !== null) void uploadFiles(files, activeSlot);
           e.target.value = "";
         }}
       />
@@ -146,78 +174,16 @@ export function GalleryContent() {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {GALLERY_AGE_SLOTS.map((slot) => {
-            const slotPhotos = photosBySlot.get(slot) ?? [];
-            const cover = slotPhotos[0];
-            const label = formatGallerySlotLabel(slot, locale, baby.birthDate);
-            const isBusy = uploadingSlot === slot;
-            const atMax = slotPhotos.length >= GALLERY_MAX_PHOTOS_PER_SLOT;
-
-            return (
-              <div
-                key={slot}
-                className="group relative overflow-hidden rounded-2xl border border-rose-200/80 bg-white shadow-sm"
-              >
-                <button
-                  type="button"
-                  onClick={() => (cover ? openViewer(slot, 0) : openUpload(slot))}
-                  disabled={isBusy}
-                  className="block w-full text-start"
-                >
-                  <div className="relative aspect-[3/4] w-full bg-gradient-to-b from-rose-50 to-white">
-                    {cover ? (
-                      <Image
-                        src={cover.photoUrl}
-                        alt={label}
-                        fill
-                        className="object-cover transition group-hover:scale-[1.02]"
-                        sizes="(max-width: 640px) 50vw, 200px"
-                      />
-                    ) : (
-                      <div className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center">
-                        <span className="flex size-10 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
-                          {isBusy ? (
-                            <Camera className="size-5 animate-pulse" />
-                          ) : (
-                            <ImagePlus className="size-5" />
-                          )}
-                        </span>
-                        <span className="text-[10px] font-bold text-rose-900">{t("addPhoto")}</span>
-                      </div>
-                    )}
-
-                    {slotPhotos.length > 0 && (
-                      <span className="absolute left-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white">
-                        {t("photoCount", {
-                          count: slotPhotos.length,
-                          max: GALLERY_MAX_PHOTOS_PER_SLOT,
-                        })}
-                      </span>
-                    )}
-
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent p-2.5 pt-8">
-                      <p className="text-[11px] font-bold leading-tight text-white">{label}</p>
-                    </div>
-                  </div>
-                </button>
-
-                {cover && !atMax && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openUpload(slot);
-                    }}
-                    disabled={isBusy}
-                    className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-white/95 text-rose-700 shadow transition hover:bg-rose-50"
-                    aria-label={t("addPhoto")}
-                  >
-                    <Plus className={cn("size-4", isBusy && "animate-pulse")} />
-                  </button>
-                )}
-              </div>
-            );
-          })}
+          {GALLERY_AGE_SLOTS.map((slot) => (
+            <GallerySlotCard
+              key={slot}
+              label={formatGallerySlotLabel(slot, locale, baby.birthDate)}
+              photos={photosBySlot.get(slot) ?? []}
+              isBusy={uploadingSlot === slot}
+              onUpload={() => openUpload(slot)}
+              onOpenViewer={(index) => openViewer(slot, index)}
+            />
+          ))}
         </div>
       )}
 

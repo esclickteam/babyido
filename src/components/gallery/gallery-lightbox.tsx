@@ -3,7 +3,7 @@
 import { ChevronLeft, ChevronRight, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { GalleryPhoto } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +29,7 @@ export function GalleryLightbox({
   const t = useTranslations("gallery");
   const tc = useTranslations("common");
   const [index, setIndex] = useState(initialIndex);
+  const touchStartX = useRef(0);
 
   useEffect(() => {
     if (open) setIndex(initialIndex);
@@ -94,7 +95,18 @@ export function GalleryLightbox({
         </div>
       </div>
 
-      <div className="relative flex flex-1 items-center justify-center px-14 py-4">
+      <div
+        className="relative flex flex-1 items-center justify-center px-14 py-4"
+        onTouchStart={(e) => {
+          touchStartX.current = e.touches[0]?.clientX ?? 0;
+        }}
+        onTouchEnd={(e) => {
+          if (photos.length <= 1) return;
+          const dx = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current;
+          if (dx < -40) goNext();
+          else if (dx > 40) goPrev();
+        }}
+      >
         {photos.length > 1 && (
           <button
             type="button"
