@@ -8,3 +8,5 @@ export { Milestone } from "./Milestone";
 export { TastingEntry } from "./TastingEntry";
 export { VaccinationRecord } from "./VaccinationRecord";
 export { TummyTimeEntry } from "./TummyTimeEntry";
+export { WellBabyVisit } from "./WellBabyVisit";
+export { GalleryPhoto } from "./GalleryPhoto";

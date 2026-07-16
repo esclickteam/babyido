@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { GalleryContent } from "@/components/gallery/gallery-content";
 import { PageContainer } from "@/components/shared/page-container";
-import { ModuleScaffold } from "@/components/shared/module-scaffold";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default async function GalleryPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -8,7 +10,9 @@ export default async function GalleryPage({ params }: { params: Promise<{ locale
   const t = await getTranslations("nav");
   return (
     <PageContainer title={t("gallery")}>
-      <ModuleScaffold />
+      <Suspense fallback={<Skeleton className="h-96 w-full rounded-3xl" />}>
+        <GalleryContent />
+      </Suspense>
     </PageContainer>
   );
 }

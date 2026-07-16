@@ -194,3 +194,43 @@ export interface UserSettings {
   theme: "light" | "dark" | "system";
   notificationEmail?: string;
 }
+
+export type WellBabyVisitType = "tracking" | "tracking_vaccine";
+
+export interface WellBabyVisit {
+  _id: string;
+  babyId: string;
+  scheduledDate: string;
+  scheduledTime?: string;
+  visitType: WellBabyVisitType;
+  clinicName?: string;
+  notes?: string;
+  completed: boolean;
+  completedDate?: string;
+  reminderEnabled: boolean;
+  reminderSentAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CalendarEventType = "vaccination" | "wellBaby";
+
+export interface CalendarEvent {
+  id: string;
+  type: CalendarEventType;
+  date: string;
+  time?: string;
+  title: string;
+  subtitle?: string;
+  completed: boolean;
+  href: string;
+}
+
+export interface GalleryPhoto {
+  _id: string;
+  babyId: string;
+  ageMonths: number;
+  photoUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
