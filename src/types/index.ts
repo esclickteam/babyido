@@ -118,6 +118,34 @@ export interface VaccinationRecord {
   updatedAt: string;
 }
 
+export interface WellBabyVisit {
+  _id: string;
+  babyId: string;
+  scheduledDate: string;
+  scheduledTime?: string;
+  clinicName?: string;
+  notes?: string;
+  completed: boolean;
+  completedDate?: string;
+  reminderEnabled: boolean;
+  reminderSentAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CalendarEventType = "vaccination" | "wellBaby";
+
+export interface CalendarEvent {
+  id: string;
+  type: CalendarEventType;
+  date: string;
+  time?: string;
+  title: string;
+  subtitle?: string;
+  completed: boolean;
+  href: string;
+}
+
 /** @deprecated use VaccinationRecord */
 export interface Vaccination {
   _id: string;
