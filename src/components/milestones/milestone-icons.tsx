@@ -170,16 +170,17 @@ export function MilestoneIconBadge({
 }: MilestoneIconBadgeProps) {
   const meta = CATEGORY_META[category];
   const Icon = resolveMilestoneIcon(id, category);
-  const dim = size === "sm" ? "size-9" : size === "lg" ? "size-14" : "size-11";
-  const iconDim = size === "sm" ? "size-4" : size === "lg" ? "size-7" : "size-5";
+  const dim = size === "sm" ? "size-10" : size === "lg" ? "size-16" : "size-12";
+  const iconDim = size === "sm" ? "size-5" : size === "lg" ? "size-8" : "size-6";
+  const completedStyle = status === "completed";
 
   return (
     <span
       className={cn(
-        "relative inline-flex shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-sm ring-2",
+        "relative inline-flex shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-md ring-2",
         dim,
-        meta.gradient,
-        meta.ring,
+        completedStyle ? "from-emerald-400 to-emerald-600 ring-emerald-200/80" : meta.gradient,
+        completedStyle ? "" : meta.ring,
         animationForStatus(status),
         status === "expected_soon" && "ms-icon-glow",
         className

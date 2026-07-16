@@ -138,7 +138,7 @@ export const milestoneRecordSchema = z.object({
   babyId: z.string().min(1),
   milestoneId: z.string().min(1),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  photoUrl: z.string().url().optional().nullable().or(z.literal("")),
+  photoUrl: z.string().max(600_000).optional().nullable().or(z.literal("")),
   videoUrl: z.string().url().optional().nullable().or(z.literal("")),
   notes: z.string().max(2000).optional(),
   completed: z.boolean().optional(),
