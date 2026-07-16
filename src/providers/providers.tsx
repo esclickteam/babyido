@@ -1,6 +1,5 @@
 "use client";
 
-import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import {
   HydrationBoundary,
@@ -44,15 +43,13 @@ export function Providers({
   );
 
   return (
-    <SessionProvider refetchInterval={0} refetchOnWindowFocus={false}>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <TooltipProvider delay={200}>
-            {content}
-            <Toaster richColors closeButton position="top-center" />
-          </TooltipProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </SessionProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <TooltipProvider delay={200}>
+          {content}
+          <Toaster richColors closeButton position="top-center" />
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }

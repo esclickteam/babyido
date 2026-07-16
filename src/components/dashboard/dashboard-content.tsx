@@ -158,7 +158,15 @@ export function DashboardContent({ initialStats, selectedBabyId }: DashboardCont
             }
             icon={<Syringe className="size-4" />}
           />
-          <StatCard label={t("nextWellBaby")} value="—" icon={<Stethoscope className="size-4" />} />
+          <StatCard
+            label={t("nextWellBaby")}
+            value={
+              stats?.nextWellBabyVisit
+                ? formatShortDate(stats.nextWellBabyVisit, locale)
+                : "—"
+            }
+            icon={<Stethoscope className="size-4" />}
+          />
         </div>
       )}
     </div>

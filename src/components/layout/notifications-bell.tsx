@@ -137,7 +137,7 @@ export function NotificationsBell() {
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem className="justify-center py-3 font-semibold text-[var(--grass-deep)]">
-          <Link href="/dashboard/reminders" className="flex items-center gap-2">
+          <Link href="/dashboard/journal" className="flex items-center gap-2">
             <Check className="size-4" />
             {t("viewAll")}
           </Link>

@@ -14,6 +14,7 @@ import {
   TastingEntry,
   TummyTimeEntry,
   VaccinationRecord,
+  WellBabyVisit,
 } from "@/models";
 import type { DashboardStats } from "@/types";
 
@@ -31,7 +32,7 @@ export async function getDashboardStats(
   const { start: feedingDayStart, end: feedingDayEnd } = getFeedingDayRange(dayKey);
   const { start: sleepDayStart, end: sleepDayEnd } = getFeedingDayRange(dayKey);
 
-  const [lastGrowth, todayFeedings, todaySleep, todayTummy, lastMilestone, lastTasting, vaccinationRecords] =
+  const [lastGrowth, todayFeedings, todaySleep, todayTummy, lastMilestone, lastTasting, vaccinationRecords, nextWellBaby] =
     await Promise.all([
     GrowthMeasurement.findOne({ babyId })
       .sort({ date: -1 })
@@ -66,6 +67,10 @@ export async function getDashboardStats(
       .select("foodName category tastedDate reactions isAllergen notes isCustom foodId createdAt")
       .lean(),
     VaccinationRecord.find({ babyId }).lean(),
+    WellBabyVisit.findOne({ babyId, completed: false })
+      .sort({ scheduledDate: 1 })
+      .select("scheduledDate scheduledTime visitType clinicName")
+      .lean(),
   ]);
 
   const todayFeedingAmount = todayFeedings.reduce((sum, f) => sum + (f.amount ?? 0), 0);
@@ -151,7 +156,9 @@ export async function getDashboardStats(
         }
       : undefined,
     nextVaccination,
-    nextWellBabyVisit: undefined,
+    nextWellBabyVisit: nextWellBaby
+      ? toDateOnlyString(nextWellBaby.scheduledDate)
+      : undefined,
     todayTummyTimeMinutes,
   };
 }

@@ -7,6 +7,9 @@ import { isGoogleAuthEnabled } from "@/lib/auth/google";
 import { connectDB } from "@/lib/db/mongodb";
 import { User } from "@/models/User";
 
+/** One year — stay signed in until explicit logout. */
+const SESSION_MAX_AGE = 365 * 24 * 60 * 60;
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
@@ -51,7 +54,15 @@ if (isGoogleAuthEnabled()) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  session: { strategy: "jwt" },
+  trustHost: true,
+  session: {
+    strategy: "jwt",
+    maxAge: SESSION_MAX_AGE,
+    updateAge: 7 * 24 * 60 * 60,
+  },
+  jwt: {
+    maxAge: SESSION_MAX_AGE,
+  },
   pages: {
     signIn: "/login",
   },
@@ -91,8 +102,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token.id) {
-        session.user.id = token.id as string;
+      if (session.user) {
+        if (token.id) {
+          session.user.id = token.id as string;
+        }
+        if (token.sub && !session.user.id) {
+          session.user.id = token.sub;
+        }
       }
       return session;
     },

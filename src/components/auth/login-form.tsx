@@ -55,6 +55,7 @@ export function LoginForm({ googleEnabled }: LoginFormProps) {
       return;
     }
 
+    router.refresh();
     router.push("/dashboard");
   }
 

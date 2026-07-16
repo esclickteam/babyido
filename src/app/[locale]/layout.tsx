@@ -5,6 +5,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { SITE_URL } from "@/lib/site-url";
+import { AuthSessionProvider } from "@/providers/auth-session-provider";
 import "../globals.css";
 
 const fredoka = Fredoka({
@@ -68,7 +69,7 @@ export default async function LocaleLayout({
     <html lang={locale} dir={isRtl ? "rtl" : "ltr"} suppressHydrationWarning className={`${fredoka.variable} ${heebo.variable}`}>
       <body className="min-h-screen antialiased" style={{ fontFamily: "var(--font-body), sans-serif" }}>
         <NextIntlClientProvider messages={messages}>
-          {children}
+          <AuthSessionProvider>{children}</AuthSessionProvider>
         </NextIntlClientProvider>
       </body>
     </html>
