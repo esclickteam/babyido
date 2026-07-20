@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { ReminderAlertsInit } from "@/components/notifications/reminder-alerts-init";
 
 const QuickAddSheet = dynamic(
   () => import("@/components/layout/quick-add-sheet").then((m) => m.QuickAddSheet),
@@ -203,6 +204,7 @@ export function AppShell({
 
   return (
     <SidebarProvider defaultOpen={true}>
+      <ReminderAlertsInit />
       <AppSidebar />
       <SidebarInset className="ido-sprout min-h-svh min-w-0 flex-1 overflow-x-hidden">
         <header className="relative sticky top-0 z-10 h-16 shrink-0 border-b border-[var(--stroke)] bg-white/90 backdrop-blur-md md:h-24">

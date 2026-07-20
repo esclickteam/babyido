@@ -10,6 +10,7 @@ import { GlassCard } from "@/components/shared/glass-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PushNotificationsToggle } from "@/components/settings/push-notifications-toggle";
 import {
   Select,
   SelectContent,
@@ -69,6 +70,10 @@ export function SettingsPanel() {
         >
           {tc("save")}
         </Button>
+      </GlassCard>
+
+      <GlassCard className="space-y-4 md:col-span-2">
+        <PushNotificationsToggle />
       </GlassCard>
 
       <GlassCard className="space-y-4">

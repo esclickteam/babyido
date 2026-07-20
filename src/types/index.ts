@@ -186,6 +186,8 @@ export interface AppNotification {
   read: boolean;
   emailSentAt?: string;
   href?: string;
+  sourceKey?: string;
+  pushSentAt?: string;
   createdAt: string;
 }
 

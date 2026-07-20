@@ -19,6 +19,7 @@ export interface INotification {
   scheduledTime?: string;
   read: boolean;
   emailSentAt?: Date;
+  pushSentAt?: Date;
   sourceKey?: string;
   href?: string;
   createdAt: Date;
@@ -40,6 +41,7 @@ const NotificationSchema = new Schema<INotification>(
     scheduledTime: { type: String },
     read: { type: Boolean, default: false },
     emailSentAt: { type: Date },
+    pushSentAt: { type: Date },
     sourceKey: { type: String, index: true },
     href: { type: String },
   },

@@ -1,3 +1,4 @@
+export { PushSubscription } from "./PushSubscription";
 export { Notification } from "./Notification";
 export { User } from "./User";
 export { Baby } from "./Baby";

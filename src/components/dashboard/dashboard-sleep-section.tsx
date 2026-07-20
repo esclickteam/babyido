@@ -16,6 +16,7 @@ import { minutesToHoursMinutes } from "@/utils/age";
 import {
   formatDateTime,
   formatFeedingDateTime,
+  buildTimerStartIso,
   getNowLocalTime,
   getTodayLocal,
 } from "@/utils/date";
@@ -52,6 +53,7 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
   const today = getTodayLocal();
   const [type, setType] = useState<SleepType>("nap");
   const [completedSummary, setCompletedSummary] = useState<CompletedSummary | null>(null);
+  const [optimisticStart, setOptimisticStart] = useState<string | null>(null);
 
   const { data: summary, isLoading } = useSleepSummary(babyId, today);
   const startSleep = useStartSleep(babyId);
@@ -59,8 +61,13 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
   const deleteEntry = useDeleteSleepEntry(babyId);
 
   const active = summary?.activeEntry;
-  const isSleeping = !!active;
-  const timerLabel = useLiveTimer(isSleeping ? active?.startTime : null);
+  const effectiveStart = active?.startTime ?? optimisticStart;
+  const isSleeping = !!effectiveStart;
+  const timer = useLiveTimer(effectiveStart);
+
+  useEffect(() => {
+    if (active?.startTime) setOptimisticStart(null);
+  }, [active?.startTime]);
 
   useEffect(() => {
     if (active) setType(active.type);
@@ -79,8 +86,8 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
 
   async function handleTimerPress() {
     try {
-      if (isSleeping && active) {
-        const durationAtStop = timerLabel;
+      if (active) {
+        const durationAtStop = timer.label;
         const ended = await patchSleep.mutateAsync({
           id: active._id,
           data: { date: today, time: getNowLocalTime() },
@@ -96,6 +103,7 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
         }
         toast.success(t("sleepEnded"));
       } else {
+        setOptimisticStart(buildTimerStartIso(today));
         await startSleep.mutateAsync({
           babyId,
           type,
@@ -106,6 +114,7 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
         toast.success(t("sleepStarted"));
       }
     } catch (err) {
+      setOptimisticStart(null);
       const message = err instanceof Error ? err.message : tc("error");
       toast.error(message === "Active sleep session exists" ? t("alreadySleeping") : message);
     }
@@ -202,7 +211,8 @@ export function DashboardSleepSection({ babyId }: DashboardSleepSectionProps) {
         <div className="flex flex-col items-center gap-3">
           <LiveTimerCircle
             isActive={isSleeping}
-            timerLabel={timerLabel}
+            timerLabel={timer.label}
+            elapsedMs={timer.elapsedMs}
             onPress={handleTimerPress}
             disabled={startSleep.isPending || patchSleep.isPending}
             idleIcon={

@@ -1,18 +1,47 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatElapsedTimerHms } from "@/utils/sleep";
+import { formatElapsedTimerHms, getElapsedMs } from "@/utils/sleep";
 
-/** Ticks every second while a session is active. */
-export function useLiveTimer(startTime: string | null | undefined): string {
+export interface LiveTimerState {
+  label: string;
+  elapsedMs: number;
+  elapsedSeconds: number;
+}
+
+const IDLE: LiveTimerState = { label: "0:00:00", elapsedMs: 0, elapsedSeconds: 0 };
+
+/** Smooth live timer — ticks from 0:00:00 with second precision. */
+export function useLiveTimer(startTime: string | null | undefined): LiveTimerState {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (!startTime) return;
+
     setNow(Date.now());
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
+    let raf = 0;
+    let lastSecond = -1;
+
+    const tick = () => {
+      const t = Date.now();
+      const second = Math.floor(getElapsedMs(startTime, t) / 1000);
+      if (second !== lastSecond) {
+        lastSecond = second;
+        setNow(t);
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [startTime]);
 
-  return startTime ? formatElapsedTimerHms(startTime, now) : "0:00:00";
+  if (!startTime) return IDLE;
+
+  const elapsedMs = getElapsedMs(startTime, now);
+  return {
+    label: formatElapsedTimerHms(startTime, now),
+    elapsedMs,
+    elapsedSeconds: Math.floor(elapsedMs / 1000),
+  };
 }

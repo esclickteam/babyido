@@ -99,7 +99,12 @@ export function getTodayLocal(): string {
 }
 
 export function getNowLocalTime(): string {
-  return format(new Date(), "HH:mm");
+  return format(new Date(), "HH:mm:ss");
+}
+
+/** ISO start time for live timers (second precision). */
+export function buildTimerStartIso(dateStr: string): string {
+  return feedingDateTimeToMongo(dateStr, getNowLocalTime()).toISOString();
 }
 
 /** yyyy-MM-dd in Asia/Jerusalem (for server-side feeding day boundaries) */
@@ -109,15 +114,33 @@ export function getTodayIsrael(): string {
   );
 }
 
-/** Parse HH:mm or h:mm AM/PM */
-export function parseTimeInput(timeStr: string): { hours: number; minutes: number } | null {
+/** Parse HH:mm, HH:mm:ss, or h:mm AM/PM */
+export function parseTimeInput(
+  timeStr: string
+): { hours: number; minutes: number; seconds: number } | null {
   const trimmed = timeStr.trim().toUpperCase();
+  const m24s = trimmed.match(/^(\d{1,2}):(\d{2}):(\d{2})$/);
+  if (m24s) {
+    const hours = Number(m24s[1]);
+    const minutes = Number(m24s[2]);
+    const seconds = Number(m24s[3]);
+    if (
+      hours >= 0 &&
+      hours < 24 &&
+      minutes >= 0 &&
+      minutes < 60 &&
+      seconds >= 0 &&
+      seconds < 60
+    ) {
+      return { hours, minutes, seconds };
+    }
+  }
   const m24 = trimmed.match(/^(\d{1,2}):(\d{2})$/);
   if (m24) {
     const hours = Number(m24[1]);
     const minutes = Number(m24[2]);
     if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
-      return { hours, minutes };
+      return { hours, minutes, seconds: 0 };
     }
   }
   const m12 = trimmed.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/);
@@ -125,7 +148,7 @@ export function parseTimeInput(timeStr: string): { hours: number; minutes: numbe
     let hours = Number(m12[1]) % 12;
     if (m12[3] === "PM") hours += 12;
     const minutes = Number(m12[2]);
-    if (minutes >= 0 && minutes < 60) return { hours, minutes };
+    if (minutes >= 0 && minutes < 60) return { hours, minutes, seconds: 0 };
   }
   return null;
 }
@@ -136,7 +159,7 @@ export function feedingDateTimeToMongo(dateStr: string, timeStr: string): Date {
   const [y, m, d] = normalized.split("-").map(Number);
   const parsed = parseTimeInput(timeStr);
   if (!parsed) throw new Error("Invalid time");
-  return new Date(Date.UTC(y, m - 1, d, parsed.hours, parsed.minutes, 0));
+  return new Date(Date.UTC(y, m - 1, d, parsed.hours, parsed.minutes, parsed.seconds));
 }
 
 /**
@@ -196,7 +219,7 @@ export function combineLocalDateTime(dateStr: string, timeStr: string): Date {
   const parsed = parseTimeInput(timeStr);
   if (!parsed) throw new Error("Invalid time");
   const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(y, m - 1, d, parsed.hours, parsed.minutes, 0);
+  return new Date(y, m - 1, d, parsed.hours, parsed.minutes, parsed.seconds);
 }
 
 export type FeedingPeriod = "day" | "week" | "month";

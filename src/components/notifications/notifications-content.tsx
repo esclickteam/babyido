@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { useMarkNotificationsRead, useNotifications } from "@/hooks/use-notifications";
 import type { AppNotification, Locale } from "@/types";
 import { IdoPanel } from "@/components/idoland/ido-panel";
+import { CreateReminderForm } from "@/components/notifications/create-reminder-form";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatShortDate } from "@/utils/date";
@@ -41,6 +42,8 @@ export function NotificationsContent() {
 
   return (
     <div className="space-y-5">
+      <CreateReminderForm />
+
       <IdoPanel className="flex flex-wrap items-center justify-between gap-3 border-[var(--grass)]/25 bg-gradient-to-l from-[#eefaf3] to-white p-5">
         <div className="flex items-center gap-3">
           <div className="flex size-12 items-center justify-center rounded-2xl bg-[var(--grass)]/15">

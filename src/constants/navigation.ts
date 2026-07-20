@@ -1,6 +1,7 @@
 import {
   Activity,
   Baby,
+  Bell,
   BookOpen,
   Calendar,
   Camera,
@@ -30,6 +31,7 @@ export const NAV_ITEMS = [
   { key: "vaccinations", href: "/dashboard/vaccinations", icon: Syringe },
   { key: "wellBaby", href: "/dashboard/well-baby", icon: Stethoscope },
   { key: "journal", href: "/dashboard/journal", icon: BookOpen },
+  { key: "reminders", href: "/dashboard/reminders", icon: Bell },
   { key: "gallery", href: "/dashboard/gallery", icon: Camera },
   { key: "settings", href: "/dashboard/settings", icon: Settings },
 ] as const;

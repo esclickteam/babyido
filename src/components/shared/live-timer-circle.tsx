@@ -39,6 +39,7 @@ const THEME_STYLES: Record<
 interface LiveTimerCircleProps {
   isActive: boolean;
   timerLabel: string;
+  elapsedMs?: number;
   onPress: () => void;
   disabled?: boolean;
   idleIcon: ReactNode;
@@ -51,6 +52,7 @@ interface LiveTimerCircleProps {
 export function LiveTimerCircle({
   isActive,
   timerLabel,
+  elapsedMs = 0,
   onPress,
   disabled,
   idleIcon,
@@ -61,8 +63,7 @@ export function LiveTimerCircle({
 }: LiveTimerCircleProps) {
   const styles = THEME_STYLES[theme];
   const dim = size === "lg" ? "size-40 sm:size-44" : "size-36 sm:size-40";
-  const seconds = isActive ? Number(timerLabel.split(":").pop() ?? "0") : 0;
-  const secondProgress = isActive ? (seconds / 60) * 289 : 0;
+  const secondProgress = isActive ? ((elapsedMs % 60_000) / 60_000) * 289 : 0;
 
   return (
     <button
@@ -91,7 +92,7 @@ export function LiveTimerCircle({
             strokeWidth="3"
             strokeLinecap="round"
             strokeDasharray={`${secondProgress} 289`}
-            className="transition-[stroke-dasharray] duration-1000 ease-linear"
+            className="transition-none"
           />
         )}
       </svg>

@@ -2,7 +2,7 @@
 
 import { Baby, Clock, Sparkles, Trash2, TrendingUp } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   useDeleteTummyTimeEntry,
@@ -13,7 +13,7 @@ import {
 import { useLiveTimer } from "@/hooks/use-live-timer";
 import { TUMMY_TIME_DAILY_GOAL_MINUTES } from "@/constants/tummy-time";
 import { minutesToHoursMinutes } from "@/utils/age";
-import { getNowLocalTime, getTodayLocal } from "@/utils/date";
+import { buildTimerStartIso, getNowLocalTime, getTodayLocal } from "@/utils/date";
 import { formatTimeFromIso, sleepDurationMinutes } from "@/utils/sleep";
 import type { Locale } from "@/types";
 import { LiveTimerCircle } from "@/components/shared/live-timer-circle";
@@ -34,6 +34,7 @@ export function TummyTimeTracker({ babyId, variant = "dashboard" }: TummyTimeTra
   const today = getTodayLocal();
   const [completedMinutes, setCompletedMinutes] = useState<number | null>(null);
   const [completedDuration, setCompletedDuration] = useState<string | null>(null);
+  const [optimisticStart, setOptimisticStart] = useState<string | null>(null);
 
   const { data: summary, isLoading } = useTummyTimeSummary(babyId, today);
   const start = useStartTummyTime(babyId);
@@ -41,8 +42,13 @@ export function TummyTimeTracker({ babyId, variant = "dashboard" }: TummyTimeTra
   const deleteEntry = useDeleteTummyTimeEntry(babyId);
 
   const active = summary?.activeEntry;
-  const isActive = !!active;
-  const timerLabel = useLiveTimer(active?.startTime);
+  const effectiveStart = active?.startTime ?? optimisticStart;
+  const isActive = !!effectiveStart;
+  const timer = useLiveTimer(effectiveStart);
+
+  useEffect(() => {
+    if (active?.startTime) setOptimisticStart(null);
+  }, [active?.startTime]);
 
   const goalPercent = Math.min(
     100,
@@ -51,8 +57,8 @@ export function TummyTimeTracker({ babyId, variant = "dashboard" }: TummyTimeTra
 
   async function handleTimer() {
     try {
-      if (isActive && active) {
-        const durationAtStop = timerLabel;
+      if (active) {
+        const durationAtStop = timer.label;
         const ended = await end.mutateAsync({
           id: active._id,
           data: { date: today, time: getNowLocalTime() },
@@ -63,12 +69,15 @@ export function TummyTimeTracker({ babyId, variant = "dashboard" }: TummyTimeTra
         }
         toast.success(t("sessionEnded"));
       } else {
+        const startedAt = buildTimerStartIso(today);
+        setOptimisticStart(startedAt);
         await start.mutateAsync({ babyId, date: today, time: getNowLocalTime() });
         setCompletedMinutes(null);
         setCompletedDuration(null);
         toast.success(t("sessionStarted"));
       }
     } catch (err) {
+      setOptimisticStart(null);
       const msg = err instanceof Error ? err.message : tc("error");
       toast.error(msg.includes("Active") ? t("alreadyActive") : msg);
     }
@@ -136,7 +145,8 @@ export function TummyTimeTracker({ babyId, variant = "dashboard" }: TummyTimeTra
       <div className="flex flex-col items-center gap-3">
         <LiveTimerCircle
           isActive={isActive}
-          timerLabel={timerLabel}
+          timerLabel={timer.label}
+          elapsedMs={timer.elapsedMs}
           onPress={handleTimer}
           disabled={start.isPending || end.isPending}
           idleIcon={<Baby className="size-9 text-orange-600 ms-icon-float" strokeWidth={2} />}
