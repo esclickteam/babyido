@@ -1,20 +1,20 @@
 "use client";
 
-import { Bell, Check, Clock, Syringe, Utensils } from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, Bell, Check, Clock, Settings, Syringe, Utensils } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { useMarkNotificationsRead, useNotifications } from "@/hooks/use-notifications";
 import type { AppNotification, Locale } from "@/types";
-import { buttonVariants } from "@/components/ui/button";
+import { PushNotificationsToggle } from "@/components/settings/push-notifications-toggle";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { formatShortDate } from "@/utils/date";
 
@@ -77,24 +77,37 @@ export function NotificationsBell() {
   const t = useTranslations("notifications");
   const locale = useLocale() as Locale;
   const router = useRouter();
-  const { data, isError } = useNotifications();
+  const { data, isError, isLoading } = useNotifications();
   const markRead = useMarkNotificationsRead();
+  const [open, setOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const unread = data?.unreadCount ?? 0;
   const items = data?.items ?? [];
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) setShowSettings(false);
+  }
 
   function handleRead(id: string) {
     markRead.mutate({ ids: [id] });
   }
 
+  function handleViewAll() {
+    setOpen(false);
+    router.push("/dashboard/reminders");
+  }
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        className={cn(
-          buttonVariants({ variant: "outline", size: "icon" }),
-          "relative size-11 rounded-xl border-sky-200 bg-sky-50 text-sky-800 shadow-sm hover:bg-sky-100"
-        )}
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="relative size-11 rounded-xl border-sky-200 bg-sky-50 text-sky-800 shadow-sm hover:bg-sky-100"
         aria-label={t("title")}
+        onClick={() => setOpen(true)}
       >
         <Bell className="size-5" />
         {unread > 0 && (
@@ -102,48 +115,118 @@ export function NotificationsBell() {
             {unread > 9 ? "9+" : unread}
           </span>
         )}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 rounded-2xl p-0">
-        <DropdownMenuLabel className="flex items-center justify-between px-4 py-3">
-          <span>{t("title")}</span>
-          {unread > 0 && (
-            <button
-              type="button"
-              className="text-xs font-semibold text-[var(--grass-deep)] hover:underline"
-              onClick={() => markRead.mutate({ markAll: true })}
-            >
-              {t("markAllRead")}
-            </button>
-          )}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {isError ? (
-          <p className="px-4 py-8 text-center text-sm text-destructive">{t("loadError")}</p>
-        ) : items.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">{t("empty")}</p>
-        ) : (
-          <ScrollArea className="max-h-80">
-            <div className="space-y-0.5 p-1">
-              {items.slice(0, 8).map((item) => (
-                <NotificationRow
-                  key={item._id}
-                  item={item}
-                  locale={locale}
-                  onRead={handleRead}
-                />
-              ))}
-            </div>
-          </ScrollArea>
-        )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="justify-center py-3 font-semibold text-[var(--grass-deep)]"
-          onClick={() => router.push("/dashboard/reminders")}
+      </Button>
+
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent
+          className="flex max-h-[min(85svh,640px)] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-w-md"
+          showCloseButton
         >
-          <Check className="size-4" />
-          {t("viewAll")}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DialogHeader className="shrink-0 border-b px-4 py-3 text-right">
+            {showSettings ? (
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="rounded-lg"
+                  aria-label={t("backToList")}
+                  onClick={() => setShowSettings(false)}
+                >
+                  <ArrowRight className="size-4" />
+                </Button>
+                <div className="min-w-0 flex-1 text-right">
+                  <DialogTitle className="text-base font-bold">{t("pushSettings")}</DialogTitle>
+                  <DialogDescription className="text-xs">{t("pushSettingsHint")}</DialogDescription>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="rounded-lg text-muted-foreground hover:text-foreground"
+                    aria-label={t("pushSettings")}
+                    onClick={() => setShowSettings(true)}
+                  >
+                    <Settings className="size-4" />
+                  </Button>
+                  {unread > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 rounded-lg px-2 text-xs font-semibold text-[var(--grass-deep)]"
+                      onClick={() => markRead.mutate({ markAll: true })}
+                    >
+                      {t("markAllRead")}
+                    </Button>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 text-right">
+                  <DialogTitle className="text-base font-bold">{t("title")}</DialogTitle>
+                  {unread > 0 && (
+                    <DialogDescription className="text-xs">
+                      {t("unreadCount", { count: unread })}
+                    </DialogDescription>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogHeader>
+
+          <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+            {showSettings ? (
+              <div className="px-2 py-3">
+                <PushNotificationsToggle />
+              </div>
+            ) : isLoading ? (
+              <div className="space-y-2 px-2 py-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-16 animate-pulse rounded-xl bg-muted/40" />
+                ))}
+              </div>
+            ) : isError ? (
+              <p className="px-4 py-10 text-center text-sm text-destructive">{t("loadError")}</p>
+            ) : items.length === 0 ? (
+              <div className="px-4 py-10 text-center">
+                <Bell className="mx-auto size-8 text-muted-foreground/40" />
+                <p className="mt-3 text-sm text-muted-foreground">{t("empty")}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{t("emptyHint")}</p>
+              </div>
+            ) : (
+              <div className="space-y-0.5">
+                {items.map((item) => (
+                  <NotificationRow
+                    key={item._id}
+                    item={item}
+                    locale={locale}
+                    onRead={handleRead}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {!showSettings && (
+            <div className="shrink-0 border-t p-3">
+              <button
+                type="button"
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "h-11 w-full justify-center gap-2 rounded-xl font-semibold text-[var(--grass-deep)]"
+                )}
+                onClick={handleViewAll}
+              >
+                <Check className="size-4" />
+                {t("viewAll")}
+              </button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

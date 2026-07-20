@@ -332,6 +332,12 @@
     "emptyHint": "When you schedule a vaccine, a reminder will appear here and by email",
     "markAllRead": "Mark all as read",
     "viewAll": "All notifications",
-    "emailSent": "Email sent"
+    "emailSent": "Email sent",
+    "loadError": "Could not load notifications — try again",
+    "emptyHint": "Add a reminder or schedule a vaccine appointment",
+    "pushSettings": "Phone notifications",
+    "pushSettingsHint": "Add BabyIdo to your home screen (PWA) and allow notifications",
+    "backToList": "Back to list",
+    "unreadCount": "{count, plural, one {# unread notification} other {# unread notifications}}"
   }
 }
