@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/config";
+import { getAuthUserId } from "@/lib/auth/session-user";
 import { connectDB } from "@/lib/db/mongodb";
 import { Notification } from "@/models/Notification";
 import type { AppNotification } from "@/types";
@@ -37,13 +38,14 @@ function serialize(n: {
 export async function GET() {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = getAuthUserId(session);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectDB();
     const now = new Date();
-    const items = await Notification.find({ userId: session.user.id })
+    const items = await Notification.find({ userId })
       .sort({ scheduledAt: 1 })
       .limit(50)
       .lean();
@@ -74,7 +76,8 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = getAuthUserId(session);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -85,10 +88,10 @@ export async function PUT(request: Request) {
     await connectDB();
 
     if (markAll) {
-      await Notification.updateMany({ userId: session.user.id, read: false }, { $set: { read: true } });
+      await Notification.updateMany({ userId, read: false }, { $set: { read: true } });
     } else if (ids?.length) {
       await Notification.updateMany(
-        { userId: session.user.id, _id: { $in: ids } },
+        { userId, _id: { $in: ids } },
         { $set: { read: true } }
       );
     }

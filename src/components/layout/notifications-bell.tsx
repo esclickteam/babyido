@@ -2,7 +2,7 @@
 
 import { Bell, Check, Clock, Syringe, Utensils } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useMarkNotificationsRead, useNotifications } from "@/hooks/use-notifications";
 import type { AppNotification, Locale } from "@/types";
 import { buttonVariants } from "@/components/ui/button";
@@ -24,7 +24,13 @@ const TYPE_ICON: Partial<Record<AppNotification["type"], React.ReactNode>> = {
   tasting: <Utensils className="size-4 text-amber-500" />,
   appointment: <Clock className="size-4 text-sky-600" />,
   reminder: <Bell className="size-4 text-violet-600" />,
+  custom: <Bell className="size-4 text-violet-600" />,
 };
+
+function safeDateKey(iso: string): string {
+  if (!iso) return "";
+  return iso.includes("T") ? iso.split("T")[0]! : iso.slice(0, 10);
+}
 
 function NotificationRow({
   item,
@@ -35,42 +41,34 @@ function NotificationRow({
   locale: Locale;
   onRead: (id: string) => void;
 }) {
-  const when = formatShortDate(item.scheduledAt.split("T")[0], locale);
+  const when = formatShortDate(safeDateKey(item.scheduledAt), locale);
   const timeSuffix = item.scheduledTime ? ` · ${item.scheduledTime}` : "";
 
-  const content = (
-    <div
-      className={cn(
-        "flex gap-3 rounded-xl px-3 py-2.5 text-right transition hover:bg-muted/60",
-        !item.read && "bg-sky-50/70"
-      )}
-    >
-      <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
-        {TYPE_ICON[item.type] ?? <Bell className="size-4" />}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-bold text-[var(--ink)]">{item.title}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">{item.body}</p>
-        <p className="mt-1 text-[11px] font-semibold text-sky-700">
-          {when}
-          {timeSuffix}
-        </p>
-      </div>
-      {!item.read && <span className="mt-2 size-2 shrink-0 rounded-full bg-sky-500" />}
-    </div>
-  );
-
-  if (item.href) {
-    return (
-      <Link href={item.href} onClick={() => onRead(item._id)}>
-        {content}
-      </Link>
-    );
-  }
-
   return (
-    <button type="button" className="w-full" onClick={() => onRead(item._id)}>
-      {content}
+    <button
+      type="button"
+      className="w-full text-right"
+      onClick={() => onRead(item._id)}
+    >
+      <div
+        className={cn(
+          "flex gap-3 rounded-xl px-3 py-2.5 transition hover:bg-muted/60",
+          !item.read && "bg-sky-50/70"
+        )}
+      >
+        <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
+          {TYPE_ICON[item.type] ?? <Bell className="size-4" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold text-[var(--ink)]">{item.title}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{item.body}</p>
+          <p className="mt-1 text-[11px] font-semibold text-sky-700">
+            {when}
+            {timeSuffix}
+          </p>
+        </div>
+        {!item.read && <span className="mt-2 size-2 shrink-0 rounded-full bg-sky-500" />}
+      </div>
     </button>
   );
 }
@@ -78,7 +76,8 @@ function NotificationRow({
 export function NotificationsBell() {
   const t = useTranslations("notifications");
   const locale = useLocale() as Locale;
-  const { data } = useNotifications();
+  const router = useRouter();
+  const { data, isError } = useNotifications();
   const markRead = useMarkNotificationsRead();
 
   const unread = data?.unreadCount ?? 0;
@@ -92,13 +91,12 @@ export function NotificationsBell() {
     <DropdownMenu>
       <DropdownMenuTrigger
         className={cn(
-          buttonVariants({ variant: "outline", size: "sm" }),
-          "relative gap-1.5 rounded-xl border-sky-200 bg-sky-50 px-2.5 font-bold text-sky-800 shadow-sm hover:bg-sky-100 sm:px-3"
+          buttonVariants({ variant: "outline", size: "icon" }),
+          "relative size-11 rounded-xl border-sky-200 bg-sky-50 text-sky-800 shadow-sm hover:bg-sky-100"
         )}
         aria-label={t("title")}
       >
-        <Bell className="size-4 shrink-0" />
-        <span className="hidden text-xs sm:inline">{t("title")}</span>
+        <Bell className="size-5" />
         {unread > 0 && (
           <span className="absolute -top-1 -left-1 flex min-w-5 items-center justify-center rounded-full bg-[var(--coral)] px-1.5 text-[10px] font-bold text-white">
             {unread > 9 ? "9+" : unread}
@@ -119,7 +117,9 @@ export function NotificationsBell() {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {items.length === 0 ? (
+        {isError ? (
+          <p className="px-4 py-8 text-center text-sm text-destructive">{t("loadError")}</p>
+        ) : items.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-muted-foreground">{t("empty")}</p>
         ) : (
           <ScrollArea className="max-h-80">
@@ -136,11 +136,12 @@ export function NotificationsBell() {
           </ScrollArea>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="justify-center py-3 font-semibold text-[var(--grass-deep)]">
-          <Link href="/dashboard/reminders" className="flex items-center gap-2">
-            <Check className="size-4" />
-            {t("viewAll")}
-          </Link>
+        <DropdownMenuItem
+          className="justify-center py-3 font-semibold text-[var(--grass-deep)]"
+          onClick={() => router.push("/dashboard/reminders")}
+        >
+          <Check className="size-4" />
+          {t("viewAll")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

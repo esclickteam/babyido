@@ -14,12 +14,15 @@ function shouldAlert(item: AppNotification): boolean {
 }
 
 function showLocalNotification(item: AppNotification) {
-  if (typeof window === "undefined" || !("Notification" in window)) return;
-  if (Notification.permission !== "granted") return;
+  if (typeof window === "undefined") return;
 
   const tag = item._id;
   if (alerted.has(tag)) return;
   alerted.add(tag);
+
+  toast.info(item.title, { description: item.body, duration: 8000 });
+
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
 
   try {
     new Notification(item.title, {
@@ -30,10 +33,8 @@ function showLocalNotification(item: AppNotification) {
       lang: "he",
     });
   } catch {
-    // ignore — mobile browsers may block non-sw notifications
+    // Some browsers block non-service-worker notifications
   }
-
-  toast.info(item.title, { description: item.body, duration: 8000 });
 }
 
 /** Polls notifications and fires browser toasts/alerts when a reminder is due. */

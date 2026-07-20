@@ -1,3 +1,4 @@
+export { JournalEvent } from "./JournalEvent";
 export { PushSubscription } from "./PushSubscription";
 export { Notification } from "./Notification";
 export { User } from "./User";

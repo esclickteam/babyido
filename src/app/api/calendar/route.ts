@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/config";
+import { getAuthUserId } from "@/lib/auth/session-user";
 import { getOwnedBaby } from "@/lib/api/baby-access";
 import { connectDB } from "@/lib/db/mongodb";
 import { getVaccineById } from "@/constants/vaccinations";
 import { VaccinationRecord } from "@/models/VaccinationRecord";
 import { WellBabyVisit } from "@/models/WellBabyVisit";
+import { JournalEvent } from "@/models/JournalEvent";
+import { expandJournalOccurrences } from "@/lib/journal/expand-events";
 import { dateOnlyToMongo, toDateOnlyString } from "@/utils/date";
 import type { CalendarEvent } from "@/types";
 
@@ -43,7 +46,8 @@ function serializeWellBaby(v: {
 export async function GET(request: Request) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = getAuthUserId(session);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -56,7 +60,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "babyId, from, to required" }, { status: 400 });
     }
 
-    const baby = await getOwnedBaby(babyId, session.user.id);
+    const baby = await getOwnedBaby(babyId, userId);
     if (!baby) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
@@ -65,7 +69,7 @@ export async function GET(request: Request) {
     const fromDate = dateOnlyToMongo(from);
     const toDate = dateOnlyToMongo(to);
 
-    const [vaccinations, wellBabyVisits] = await Promise.all([
+    const [vaccinations, wellBabyVisits, journalEvents] = await Promise.all([
       VaccinationRecord.find({
         babyId,
         scheduledDate: { $gte: fromDate, $lte: toDate },
@@ -74,6 +78,7 @@ export async function GET(request: Request) {
         babyId,
         scheduledDate: { $gte: fromDate, $lte: toDate },
       }).lean(),
+      JournalEvent.find({ babyId, userId }).lean(),
     ]);
 
     const events: CalendarEvent[] = [];
@@ -104,8 +109,44 @@ export async function GET(request: Request) {
         title: visit.clinicName || "טיפת חלב",
         subtitle: typeLabel + (visit.notes ? ` · ${visit.notes.slice(0, 60)}` : ""),
         completed: visit.completed,
-        href: "/dashboard/well-baby",
+        href: "/dashboard/journal",
       });
+    }
+
+    for (const entry of journalEvents) {
+      const startDate = toDateOnlyString(entry.startDate);
+      const occurrences = expandJournalOccurrences(
+        {
+          startDate,
+          time: entry.time,
+          recurrence: entry.recurrence,
+          weekday: entry.weekday,
+          sessionCount: entry.sessionCount,
+        },
+        from,
+        to
+      );
+
+      for (const occ of occurrences) {
+        const recurrenceLabel =
+          entry.recurrence === "weekly"
+            ? "קבוע"
+            : entry.recurrence === "sessions"
+              ? `מפגש (${entry.sessionCount ?? 1})`
+              : "חד פעמי";
+
+        events.push({
+          id: `journal-${entry._id}-${occ.date}`,
+          type: "journal",
+          date: occ.date,
+          time: occ.time,
+          title: entry.title,
+          subtitle: recurrenceLabel + (entry.notes ? ` · ${entry.notes.slice(0, 50)}` : ""),
+          completed: false,
+          href: "/dashboard/journal",
+          journalEventId: entry._id.toString(),
+        });
+      }
     }
 
     events.sort((a, b) => {

@@ -215,7 +215,7 @@ export interface WellBabyVisit {
   updatedAt: string;
 }
 
-export type CalendarEventType = "vaccination" | "wellBaby";
+export type CalendarEventType = "vaccination" | "wellBaby" | "journal";
 
 export interface CalendarEvent {
   id: string;
@@ -226,6 +226,7 @@ export interface CalendarEvent {
   subtitle?: string;
   completed: boolean;
   href: string;
+  journalEventId?: string;
 }
 
 export interface GalleryPhoto {
